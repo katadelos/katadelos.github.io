@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>katadelos</title>
+    <description></description>
+    <link>https://katadelos.github.io/</link>
+    <atom:link href="https://katadelos.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Wed, 30 Sep 2020 21:20:25 +0100</pubDate>
+    <lastBuildDate>Wed, 30 Sep 2020 21:20:25 +0100</lastBuildDate>
+    <generator>Jekyll v4.0.0</generator>
+
+    
+      <item>
+        <title>Installing OpenWrt 19.07.3 on BT Homehub 5A</title>
+        <description>&lt;p&gt;After moving into a new property a few months ago, the drawbacks of using the ISP supplied firmware included on my router rapidly started to become apparent.&lt;/p&gt;
+
+&lt;p&gt;As a rule, ISP supplied firmwares tend to have poor support for custom DNS servers (no PiHole for you), lack an SSH server (ruling out remote administration) and do not allow the installation of software supplied by a third party, among other drawbacks.&lt;/p&gt;
+
+&lt;p&gt;This is not a conspiracy against end users - removing features that are infrequently used makes sense from a business perspective when you consider the extra man-hours required to develop, test and support them. Additionally, the attack surface of a device can be reduced by limiting the number of features capable of causing security issues if improperly configured.&lt;/p&gt;
+
+&lt;p&gt;Regardless, it’s still frustrating using a router that offers few of the features needed to have control over your home network.&lt;/p&gt;
+
+&lt;p&gt;Fortunately, the OpenWrt project offers an alternative firmware that is available for many embedded devices. I’ve been using it both professionally and at home for a number of years now, mostly for creating additional WLAN access points or repeaters connected to existing networks. OpenWrt has the advantages of a decent web interface (LUCI), shell access using the Dropbear SSH server and the option of installing extra software using the &lt;code class=&quot;highlighter-rouge&quot;&gt;opkg&lt;/code&gt; package manager.&lt;/p&gt;
+
+&lt;p&gt;However, there are some significant drawbacks depending on the device that you use. Support for some devices lags behind others and is dependent on both the level of interest that the community takes in that device and the availability of open source drivers for the hardware within the router. This means that 2.4Ghz WiFi, 5Ghz WiFi, the modem or some combination thereof may not be functional.&lt;/p&gt;
+
+&lt;p&gt;This leaves us with the choice of buying either a new or used router with good support for OpenWrt. I prefer to reuse old hardware whenever it is practical and was lucky enough to have a BT Homehub 5A lying about unused. This router is a popular target for OpenWrt and has excellent hardware support but the installation process is quite convoluted, requiring you to solder wires to test points exposing a serial port and the boot mode selector.&lt;/p&gt;
+
+&lt;p&gt;You then need to load a modified version of U-Boot over the serial connection that allows booting via TFTP. This, in turn, is used to load a minimal OpenWrt image that allows you to back up the existing firmware and patch U-Boot to enable console access and modify the boot variables. Once this is done, you can install a full release of OpenWrt from a USB drive.&lt;/p&gt;
+
+&lt;hr /&gt;
+&lt;h2 id=&quot;prerequisites&quot;&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;To install OpenWrt on this device, you will need to download the following files:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/mkresin/BTHH5a-installimage/releases/download/v0.1/lede-lantiq-bthomehubv5a_ram-u-boot.asc&quot;&gt;U-Boot with TFTP&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/mkresin/BTHH5a-installimage/releases/download/v0.1/lede-lantiq-xrx200-BTHOMEHUBV5A-installimage.bin&quot;&gt;Minimal install image&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://downloads.openwrt.org/releases/19.07.3/targets/lantiq/xrx200/openwrt-19.07.3-lantiq-xrx200-bt_homehub-v5a-squashfs-sysupgrade.bin&quot;&gt;Full OpenWrt image&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;FAT32 formatted USB stick&lt;/li&gt;
+  &lt;li&gt;USB-Serial converter&lt;/li&gt;
+  &lt;li&gt;Ethernet cable&lt;/li&gt;
+  &lt;li&gt;Soldering iron (preferably with a fine tip) + solder&lt;/li&gt;
+  &lt;li&gt;Fine wire&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;There are a number of USB to Serial converters available, usually based on the CH340/341, CP102 or FT232RL chips. Any converter that supports 115200 bauds at 5 volts will do; in this article I am using one based on the CP102. A USB extension cable is not necessary but allows you some additional flexibility when working on the router.&lt;/p&gt;
+
+&lt;p&gt;You will also need a serial terminal emulator and TFTP server. You could use &lt;code class=&quot;highlighter-rouge&quot;&gt;screen&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;minicom&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;picocom&lt;/code&gt; or a variety of others as your serial terminal; my personal preference is for &lt;code class=&quot;highlighter-rouge&quot;&gt;picocom&lt;/code&gt;. For the TFTP server, I used &lt;code class=&quot;highlighter-rouge&quot;&gt;aftpd&lt;/code&gt;.&lt;/p&gt;
+
+&lt;hr /&gt;
+&lt;h2 id=&quot;opening-the-case&quot;&gt;Opening the case&lt;/h2&gt;
+&lt;p&gt;This is perhaps the most difficult part of the installation. You will need to use a plastic card or spudger to work open the clips inside the case to release the front section and expose the PCB within. &lt;a href=&quot;https://www.youtube.com/user/jfinnie78&quot;&gt;James Finnie&lt;/a&gt; has created a video detailing this process which I have included below.&lt;/p&gt;
+&lt;iframe class=&quot;yt&quot; allowfullscreen=&quot;&quot; src=&quot;https://www.youtube.com/embed/XhE_QpLFvpM&quot;&gt;&lt;/iframe&gt;
+
+&lt;hr /&gt;
+&lt;h2 id=&quot;soldering-to-test-points&quot;&gt;Soldering to test points&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/openwrt2.jpg&quot; alt=&quot;Dodgy soldering job&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;You will now need to solder wires to the PCB of the router at the following locations:&lt;/p&gt;
+
+&lt;div class=&quot;tablewrapper&quot;&gt;
+  &lt;table&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th&gt;Location&lt;/th&gt;
+        &lt;th&gt;Purpose&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td&gt;Right of R77&lt;/td&gt;
+        &lt;td&gt;Serial RX&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;Right of R78&lt;/td&gt;
+        &lt;td&gt;Serial TX&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;Above R45&lt;/td&gt;
+        &lt;td&gt;Boot Select&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;Left USB&lt;/td&gt;
+        &lt;td&gt;GND&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+
+&lt;/div&gt;
+
+&lt;p&gt;I used Dupont wires terminated with female connectors for this. The Dupont connectors made it easier to attach the wires to my serial converter but if I was to do this again, I’d probably use finer single core wire considering the size of the pads. Once the wires were attached, I taped them down to the PCB and case to provide some strain relief.&lt;/p&gt;
+
+&lt;hr /&gt;
+&lt;h2 id=&quot;booting-into-uart-mode-and-loading-u-boot&quot;&gt;Booting into UART mode and loading U-Boot&lt;/h2&gt;
+&lt;p&gt;You will need to connect the RX and TX wires to the matching pins on your serial converter and bridge the Boot Select wire to the ground wire with a jumper wire or paper clip. When ready, open a &lt;code class=&quot;highlighter-rouge&quot;&gt;picocom&lt;/code&gt; session on your serial converter - on Linux, the serial converter is usually located within the &lt;code class=&quot;highlighter-rouge&quot;&gt;/dev/&lt;/code&gt; directory with a name beginning with &lt;code class=&quot;highlighter-rouge&quot;&gt;ttyUSB*&lt;/code&gt; or &lt;code class=&quot;highlighter-rouge&quot;&gt;ttyACM*&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;picocom -b 115200 /dev/ttyUSB0&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;Turn on the router and wait until you see the output below:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;ROM VER: 1.1.4
+CFG 04
+UART&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;When you see the output above, quickly remove the bridge wire between Boot Select and ground, then attach the ground wire to your serial converter.&lt;/p&gt;
+
+&lt;p&gt;In a separate terminal, use &lt;code class=&quot;highlighter-rouge&quot;&gt;cat&lt;/code&gt; to send the U-Boot image to the device:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;cat lede-lantiq-bthomehubv5a_ram-u-boot.asc &amp;gt; /dev/ttyUSB0&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;This will take a few minutes to load. Once this is completed, you should see output in &lt;code class=&quot;highlighter-rouge&quot;&gt;picocom&lt;/code&gt; similar to that below:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;U-Boot 2013.10-openwrt4 (Nov 05 2016 - 21:13:45) BTHOMEHUBV5A
+
+Board: BT Home Hub 5A
+SoC:   Lantiq VRX268 v1.2
+CPU:   125 MHz
+IO:    125 MHz
+BUS:   125 MHz
+BOOT:  UART
+DRAM:  128 MiB
+NAND:  128 MiB
+Using default environment
+
+In:    serial
+Out:   serial
+Err:   serial
+Net:   ltq-eth
+Hit any key to stop autoboot:  0 
+UBI: attaching mtd1 to ubi0
+UBI: physical eraseblock size:   131072 bytes (128 KiB)
+UBI: logical eraseblock size:    129024 bytes
+UBI: smallest flash I/O unit:    2048
+UBI: sub-page size:              512
+UBI: VID header offset:          512 (aligned 512)
+UBI: data offset:                2048
+UBI: attached mtd1 to ubi0
+UBI: MTD device name:            &quot;mtd=0&quot;
+UBI: MTD device size:            126 MiB
+UBI: number of good PEBs:        1012
+UBI: number of bad PEBs:         0
+UBI: max. allowed volumes:       128
+UBI: wear-leveling threshold:    4096
+UBI: number of internal volumes: 1
+UBI: number of user volumes:     3
+UBI: available PEBs:             9
+UBI: total number of reserved PEBs: 1003
+UBI: number of PEBs reserved for bad PEB handling: 10
+UBI: max/mean erase counter: 1757/1260
+Read 0 bytes from volume kernel to 81000000
+Volume kernel not found!
+Wrong Image Format for bootm command
+ERROR: can't get kernel image!
+BTHOMEHUBV5A #&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+&lt;h2 id=&quot;loading-the-install-image&quot;&gt;Loading the install image&lt;/h2&gt;
+&lt;p&gt;The router is now ready to load a firmware image over TFTP. You will need to configure our Ethernet interface to temporarily use a static IP address - this build of U-Boot is configured to load an image from &lt;code class=&quot;highlighter-rouge&quot;&gt;192.168.1.2&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;To do so, disconnect any existing connection on this interface and issue the following command, replacing &lt;code class=&quot;highlighter-rouge&quot;&gt;eth0&lt;/code&gt; with the name of your Ethernet interface if necessary:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;sudo ifconfig eth0 192.168.1.2&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;Next, prepare the directory that you will serve the firmware image from and move the minimal install image to it:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;sudo mkdir /tftpboot
+sudo chmod 777 /tftpboot
+mv ~/Downloads/lede-lantiq-xrx200-BTHOMEHUBV5A-installimage.bin /tftpboot&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;Finally, start the TFTP server. This needs to run as root as the TFTP protocol uses port 69, a privileged port:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;sudo atftpd --bind-address 192.168.1.2 --daemon --no-fork /tftpboot/&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;If you are running Ubuntu 18.04/20.04, this command may exit immediately. This is because the package provided with this distribution adds an entry to &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/inetd.conf&lt;/code&gt; which runs &lt;code class=&quot;highlighter-rouge&quot;&gt;atftpd&lt;/code&gt; with different parameters to those above. This can be verified using &lt;code class=&quot;highlighter-rouge&quot;&gt;netstat&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;user@ubuntu:~$ sudo netstat -plunt | grep :69
+udp        0      0 0.0.0.0:69              0.0.0.0:*                           861/inetutils-inetd &lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;To avoid this, stop the &lt;code class=&quot;highlighter-rouge&quot;&gt;inetutils-inetd&lt;/code&gt; service:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;sudo systemctl stop inetutils-inetd.service&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;To load the minimal image, issue the following command within the &lt;code class=&quot;highlighter-rouge&quot;&gt;picocom&lt;/code&gt; session:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;BTHOMEHUBV5A # tftpboot 0x81000000 lede-lantiq-xrx200-BTHOMEHUBV5A-installimage.bin; bootm 0x81000000&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;Once the image has loaded, you should see output similar to this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;ltq_phy: addr 0, link 0, speed 10, duplex 0
+ltq_phy: addr 1, link 0, speed 10, duplex 0
+ltq_phy: addr 17, link 0, speed 10, duplex 0
+ltq_phy: addr 19, link 1, speed 1000, duplex 1
+ltq_phy: addr 5, link 0, speed 10, duplex 0
+Using ltq-eth device
+TFTP from server 192.168.1.2; our IP address is 192.168.1.1
+Filename 'lede-lantiq-xrx200-BTHOMEHUBV5A-installimage.bin'.
+Load address: 0x81000000
+Loading: #################################################################
+	 #################################################################
+	 #################################################################
+	 ##########################################
+done
+Bytes transferred = 3474686 (3504fe hex)
+## Booting kernel from Legacy Image at 81000000 ...
+   Image Name:   MIPS LEDE Linux-4.4.30
+   Created:      2016-11-05  20:35:36 UTC
+   Image Type:   MIPS Linux Kernel Image (lzma compressed)
+   Data Size:    3474622 Bytes = 3.3 MiB
+   Load Address: 80002000
+   Entry Point:  80002000
+   Verifying Checksum ... OK
+   Uncompressing Kernel Image ... OK
+
+Starting kernel ...
+
+[    0.000000] Linux version 4.4.30 (mkresin@desktop) (gcc version 5.4.0 (LEDE GCC 5.4.0 r2112+5) ) #0 Sat Nov 5 20:35:36 2016
+[    0.000000] SoC: xRX200 rev 1.2
+[    0.000000] bootconsole [early0] enabled
+[    0.000000] CPU0 revision is: 00019556 (MIPS 34Kc)
+[    0.000000] MIPS: machine is BTHOMEHUBV5A - BT Home Hub 5A
+...&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;h2 id=&quot;backing-up-original-firmware-and-preparing-for-install&quot;&gt;Backing up original firmware and preparing for install&lt;/h2&gt;
+&lt;p&gt;Once the minimal image has finished booting, you will presented with the guide below:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;*******************************************************************************
+*    Guide for installing LEDE onto a BT Home Hub 5 Type A/Plusnet Hub One    *
+*******************************************************************************
+
+You need an USB flash drive with at least 512MB free capacity, formatted as
+FAT32 or exFAT, attached to the Hub. The attached flash drive will be
+accessible at /tmp/mounts/&amp;lt;directory&amp;gt;.
+
+To install LEDE, the USB flash drive must have a copy of the file:
+  lede-lantiq-xrx200-BTHOMEHUBV5A-squashfs-sysupgrade.bin
+
+To restore the stock Firmware, the USB flash drive must have a have a copy
+of the nanddump backup file (hh5a.nanddump) containing the stock Firmware.
+
+LIST OF COMMANDS
+
+  To create a backup of the installed firmware (Take care to not overwrite
+  any previously made backup):
+      nanddump --file /tmp/mounts/&amp;lt;directory&amp;gt;/hh5a.nanddump /dev/mtd4
+
+  To install LEDE:
+      prepare
+
+  To restore stock firmware:
+      restore
+
+TO UPGRADE FROM OpenWrt OR LEDE PRIOR TO XXX:
+
+  Restore the stock firmware and do a fresh install of LEDE.
+
+If you don't have a backup of the stock firmware from your Hub, use the
+experimental 'migrate' script. It is offered with no guarantee of success. 
+You are strongly advised to restore the stock firmware.&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;From here, things are fairly self explanatory.&lt;/p&gt;
+
+&lt;p&gt;The first step is to create a backup of the original firmware. This will allow you to restore the original state of the device, including the bootloader and firmware. The backup is unique to each device, as it contains MAC addresses and calibration data for the wireless radios, among other things.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;root@lede:/# nanddump --file /tmp/mounts/hh5.dump /dev/mtd4
+ECC failed: 0
+ECC corrected: 0
+Number of bad blocks: 0
+Number of bbt blocks: 4
+Block size 131072, page size 2048, OOB size 64
+Dumping data starting at 0x00000000 and ending at 0x08000000...&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;This will take a while to complete (around 25 minutes in this case but others have reported shorter backup times). Once this is complete, you can prepare the router for the installation of OpenWRT:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;root@lede:/# prepare
+
+This script will erase parts of the Nand flash memory on this Hub, and then
+prepare it for running Sysupgrade.
+
+
+WARNING: DO NOT CONTINUE unless you have saved a backup of the original firmware
+         to your COMPUTER or other storage device!
+
+
+DO NOT POWER OFF THE DEVICE DURING THIS PROCEDURE.
+
+
+Please enter YESIHAVEABACKUP to continue:
+YESIHAVEABACKUP
+
+Starting installation...
+
+Please select you device:
+
+a) BT Home Hub 5 Type A
+b) Plusnet Hub One
+
+a
+
+WRITING custom uboot-env to unlock u-boot console and update bootcmd...
+Erasing 128 Kibyte @ 0 -- 100 % complete 
+Writing data to block 0 at offset 0x0
+
+REMOVING ubi volume OpenRG...
+[ 1688.651185] ubi0: reserved more 1 PEBs for bad PEB handling
+
+REMOVING ubi volume FFS...
+
+
+Preparation completed!
+
+Your attached USB media is mounted as a subdirectory at /tmp/mounts/
+
+To install LEDE, run:
+
+  sysupgrade /tmp/mounts/&amp;lt;directory&amp;gt;/lede-lantiq-xrx200-BTHOMEHUBV5A-squashfs-sysupgrade.bin
+
+Sysupgrade will automatically restart your device when it has finished.
+If the UART prompt appears, power-cycle your device!
+The hub should now boot up using LEDE.&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;The final step is to run the &lt;code class=&quot;highlighter-rouge&quot;&gt;sysupgrade&lt;/code&gt; utility to install a full version of OpenWRT.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;root@lede:/# sysupgrade /tmp/mount/openwrt-19.07.3-lantiq-xrx200-bt_homehub-v5a-squashfs-sysupgrade.bin 
+Cannot save config while running from ramdisk.
+killall: watchdog: no process killed
+Watchdog handover: fd=3
+- watchdog -
+killall: telnetd: no process killed
+Sending TERM to remaining processes ... ubusd logd netifd odhcpd mountd ntpd dnsmasq 
+Sending KILL to remaining processes ... 
+Volume ID 0, size 16 LEBs (2064384 bytes, 2.0 MiB), LEB size 129024 bytes (126.0 KiB), dynamic, name &quot;kernel&quot;, alignment 1
+Volume ID 1, size 30 LEBs (3870720 bytes, 3.7 MiB), LEB size 129024 bytes (126.0 KiB), dynamic, name &quot;rootfs&quot;, alignment 1
+Set volume size to 121411584
+Volume ID 2, size 941 LEBs (121411584 bytes, 115.8 MiB), LEB size 129024 bytes (126.0 KiB), dynamic, name &quot;rootfs_data&quot;, alignment 1
+sysupgrade successful&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;OpenWRT is now installed! My router rebooted into UART mode on the first reboot, but this was easily fixed by following the guidance in the output of &lt;code class=&quot;highlighter-rouge&quot;&gt;prepare&lt;/code&gt; and power-cycling the router.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Although installing OpenWRT over the serial port probably felt quite intimidating, there are a number of benefits gained by doing so:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;A router with performance and functionality that is usually found only in much more expensive routers&lt;/li&gt;
+  &lt;li&gt;Skills that can be useful when debricking or reverse engineering other embedded devices&lt;/li&gt;
+  &lt;li&gt;By re-using an old router, you’ve made a small contribution to reducing the amount of e-waste in the world&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I will not be covering the setup of this device in this article (it’s destined for a mundane life hooked up to an ADSL line), but some useful resources can be found here:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://openwrt.org/toh/bt/homehub_v5a&quot;&gt;[OpenWrt Wiki] BT HomeHub 5.0 Type A&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://openwrt.org/docs/guide-quick-start/start&quot;&gt;[OpenWrt Wiki] Quick start guide for OpenWrt/LEDE installation&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://quantumwarp.com/kb/articles/25-dsl-broadband/898-install-lede-on-a-bt-home-hub-5-plusnet-one-router&quot;&gt;[QuantumWarp] Install LEDE on a BT Home Hub 5 / Plusnet One Router &lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Wed, 30 Sep 2020 00:00:00 +0100</pubDate>
+        <link>https://katadelos.github.io/2020/09/30/installing_openwrt_bt_homehub/</link>
+        <guid isPermaLink="true">https://katadelos.github.io/2020/09/30/installing_openwrt_bt_homehub/</guid>
+      </item>
+    
+      <item>
+        <title>Adding accelerometer support to KoReader for Kindle Touch: Part 1</title>
+        <description>&lt;p&gt;The Kindle 5/Kindle Touch includes a Freescale MMA8453Q accelerometer as part of its internal hardware. It seems to have been added to enable rotation control functionality similar to that found on the later Kindle Oasis model, but support for this feature was never fully implemented by &lt;a href=&quot;https://en.wikipedia.org/wiki/Amazon_Lab126&quot;&gt;Lab126&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The objective of this article is to permanently re-enable this hardware so that it is accessible by the Kindle. Once this is complete, we can patch KoReader to support rotation control based on the readings of this sensor.&lt;/p&gt;
+
+&lt;h3 id=&quot;prior-efforts&quot;&gt;Prior efforts&lt;/h3&gt;
+&lt;p&gt;The presence of this accelerometer has been known about for a number of years; posts on the MobileRead forums indicate that the driver was included in previous firmware versions, but was later removed.&lt;/p&gt;
+
+&lt;p&gt;However, it is still possible to initialise the sensor without needing to compile a new kernel or kernel module. Although support is not present within the kernel or main partition, the kernel modules needed are still included within the diagnostics partition of the device.&lt;/p&gt;
+
+&lt;h3 id=&quot;copying-the-kernel-modules&quot;&gt;Copying the kernel modules&lt;/h3&gt;
+&lt;p&gt;To begin re-adding support for the accelerometer, we need to copy the required kernel module over to the main partition.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;mntroot rw
+mount /dev/mmcblk0p2 /mnt/mmc/
+&lt;span class=&quot;nb&quot;&gt;cp&lt;/span&gt; /mnt/mmc/lib/modules/2.6.31-rt11-lab126/kernel/arch/arm/mach-mx5/mx50_yoshi_mma8453.ko /lib/modules/2.6.31-rt11-lab126/kernel/drivers/input/keyboard/mx50_yoshi_mma8453.ko&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;update-dependency-list-and-map-files&quot;&gt;Update dependency list and map files&lt;/h3&gt;
+&lt;p&gt;We can use the &lt;code class=&quot;highlighter-rouge&quot;&gt;insmod&lt;/code&gt; command to insert the modules into the kernel, but will need to use the full path when we do so. The paths to the modules are deeply nested and even with tab auto-completion, are tedious to type when adding the modules manually via the shell.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;# Inserting modules&lt;/span&gt;
+insmod /lib/modules/2.6.31-rt11-lab126/kernel/drivers/hwmon/hwmon.ko
+insmod /lib/modules/2.6.31-rt11-lab126/kernel/drivers/input/keyboard/mx50_yoshi_mma8453.ko
+&lt;span class=&quot;c&quot;&gt;# Removing modules&lt;/span&gt;
+rmmod mx50_yoshi_mma8453
+rmmod hwmon&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;By using &lt;code class=&quot;highlighter-rouge&quot;&gt;depmod&lt;/code&gt; to update the list of kernel modules and associated map files, we can use the &lt;code class=&quot;highlighter-rouge&quot;&gt;modprobe&lt;/code&gt; command to insert the module instead. &lt;code class=&quot;highlighter-rouge&quot;&gt;modprobe&lt;/code&gt; handles the process of inserting kernel modules in the correct order, allowing us to replace the commands above with this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;# Do this once&lt;/span&gt;
+depmod &lt;span class=&quot;nt&quot;&gt;-a&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# Inserting module&lt;/span&gt;
+modprobe mx50_yoshi_mma8453
+&lt;span class=&quot;c&quot;&gt;# Removing module&lt;/span&gt;
+modprobe &lt;span class=&quot;nt&quot;&gt;-r&lt;/span&gt; mx50_yoshi_mma8453&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;Running &lt;code class=&quot;highlighter-rouge&quot;&gt;lsmod&lt;/code&gt; after &lt;code class=&quot;highlighter-rouge&quot;&gt;modprobe mx50_yoshi_mma8453&lt;/code&gt; command shows that both the &lt;code class=&quot;highlighter-rouge&quot;&gt;mx50_yoshi_mma8453&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;hwmon&lt;/code&gt; modules have been loaded successfully:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;root@kindle root]# lsmod
+Module                  Size  Used by
+mx50_yoshi_mma8453      8836  0 
+hwmon                   2108  1 mx50_yoshi_mma8453
+ar6003                344992  0 
+g_ether                27444  0 
+arcotg_udc             35944  1 g_ether
+pkt_monitor             3480  0 
+zforce                 24944  0 
+whitney_button          6664  0 
+fuse                   57256  2 
+uio_pdrv_genirq         2688  0 
+mxc_epdc_fb            42080  3 
+eink_fb_waveform      557320  1 mxc_epdc_fb&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;instantiating-accelerometer&quot;&gt;Instantiating accelerometer&lt;/h3&gt;
+&lt;p&gt;At this point, the required kernel modules needed to handle input from the sensor have been loaded, but the accelerometer itself has not been initialised. @baf on the MobileRead forum examined the source code provided by Amazon and was able to establish that the accelerometer was an I2C device; support was enabled in previous kernels by setting the &lt;code class=&quot;highlighter-rouge&quot;&gt;CONFIG_MX50_YOSHI_MMA8453&lt;/code&gt; flag at kernel compile time. They were also able to &lt;a href=&quot;https://www.kernel.org/doc/html/latest/i2c/instantiating-devices.html&quot;&gt;instantiate the I2C device&lt;/a&gt; from user-space by writing to the &lt;code class=&quot;highlighter-rouge&quot;&gt;new_device&lt;/code&gt; attribute file exposed by the I2C driver:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;mma8453 0x1c &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; /sys/devices/virtual/i2c-adapter/i2c-0/new_device&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;Checking the kernel log with &lt;code class=&quot;highlighter-rouge&quot;&gt;dmesg&lt;/code&gt; after running the above command confirms his finding that the device can be successfully instantiated and appears as an input device located at &lt;code class=&quot;highlighter-rouge&quot;&gt;/dev/input/event4&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;add mma8453 i2c driver
+i2c-adapter i2c-0: The new_device interface is still experimental and may change in a near future
+input: mma8453 as /devices/virtual/i2c-adapter/i2c-0/0-001c/input/input5
+check mma8453 chip ID
+mma8453 0-001c: build time Nov  3 2011 11:21:40
+i2c-adapter i2c-0: new_device: Instantiated device mma8453 at 0x1c&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;enabling-accelerometer-on-boot&quot;&gt;Enabling accelerometer on boot&lt;/h3&gt;
+&lt;p&gt;It is now possible for us to access the accelerometer, but we would need to load the required kernel modules and instantiate the accelerometer every time that the Kindle reboots. To avoid this, we will modify the Kindle boot scripts to enable the accelerometer alongside the rest of the input modules.&lt;/p&gt;
+
+&lt;p&gt;The Kindle uses Upstart as its init system and the configuration files for this are located within the &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/upstart/&lt;/code&gt; directory; in this case we will be editing &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/upstart/modules.conf&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;At line 41 of the file, the Kindle board type is checked and various kernel modules are loaded accordingly. The board name for the Kindle Touch is &lt;code class=&quot;highlighter-rouge&quot;&gt;whitney&lt;/code&gt; and the &lt;code class=&quot;highlighter-rouge&quot;&gt;whitney_button&lt;/code&gt; module is passed to a function called &lt;code class=&quot;highlighter-rouge&quot;&gt;f_modprobe&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;  &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;f_board&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in
+    &lt;/span&gt;whitney&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; f_modprobe whitney_button &lt;span class=&quot;p&quot;&gt;;;&lt;/span&gt;
+    yoshi&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;   f_modprobe mxc_keyb &lt;span class=&quot;p&quot;&gt;;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;       f_emit loaded_fakekey &lt;span class=&quot;p&quot;&gt;;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;esac&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;This function is located within &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/upstart/functions&lt;/code&gt; and attempts to insert the specified module into the kernel. If the module is inserted successfully, an &lt;code class=&quot;highlighter-rouge&quot;&gt;initctl&lt;/code&gt; event is emitted, otherwise the failure is logged.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;f_modprobe&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+ f_log I modules modprobe &lt;span class=&quot;s2&quot;&gt;&quot;loading module &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+ &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt; modprobe &lt;span class=&quot;nv&quot;&gt;$*&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; f_emit loaded_&lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; f_log C modules modprobe_failed &lt;span class=&quot;s2&quot;&gt;&quot;failed to load module &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;To enable the accelerometer on boot, edit the &lt;code class=&quot;highlighter-rouge&quot;&gt;case&lt;/code&gt; statement above to load the &lt;code class=&quot;highlighter-rouge&quot;&gt;mx50_yoshi_mma8453&lt;/code&gt; module and initialise the accelerometer:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;  &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;f_board&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in
+    &lt;/span&gt;whitney&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; 
+      f_modprobe whitney_button
+      f_modprobe mx50_yoshi_mma8453
+      /bin/echo mma8453 0x1c &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; /sys/devices/virtual/i2c-adapter/i2c-0/new_device   
+    &lt;span class=&quot;p&quot;&gt;;;&lt;/span&gt;
+    yoshi&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;   f_modprobe mxc_keyb &lt;span class=&quot;p&quot;&gt;;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;       f_emit loaded_fakekey &lt;span class=&quot;p&quot;&gt;;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;esac&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h3&gt;
+&lt;p&gt;We have now probed the device to check for the presence of the accelerometer, added the required kernel modules to the main partition and edited the Kindle boot scripts to enable the sensor on boot. The next task is to patch KoReader to utilise this support; this will be covered in part 2 of this article.&lt;/p&gt;
+</description>
+        <pubDate>Tue, 29 Sep 2020 00:00:00 +0100</pubDate>
+        <link>https://katadelos.github.io/2020/09/29/kindle-touch-koreader-accel-support-p1/</link>
+        <guid isPermaLink="true">https://katadelos.github.io/2020/09/29/kindle-touch-koreader-accel-support-p1/</guid>
+      </item>
+    
+
+    
+      
+        
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+
+  </channel>
+</rss>

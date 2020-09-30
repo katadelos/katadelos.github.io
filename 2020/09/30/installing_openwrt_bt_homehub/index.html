@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+  <title>Installing OpenWrt 19.07.3 on BT Homehub 5A</title>
+  <meta name='description' content="After moving into a new property a few months ago, the drawbacks of using the ISP supplied firmware included on my router rapidly started to become apparent.">
+  <link rel='canonical' href="https://katadelos.github.io/2020/09/30/installing_openwrt_bt_homehub/">
+  <link rel='alternate' type='application/rss+xml' title='katadelos' href="https://katadelos.github.io/feed.xml">
+
+  <style>
+    
+
+    html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}/*! normalize.css v5.0.0 | MIT License | github.com/necolas/normalize.css */html{font-family:sans-serif;line-height:1.15;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}article,aside,footer,header,nav,section{display:block}h1{font-size:2em;margin:0.67em 0}figcaption,figure,main{display:block}figure{margin:1em 40px}hr{box-sizing:content-box;height:0;overflow:visible}pre{font-family:monospace, monospace;font-size:1em}a{background-color:transparent;-webkit-text-decoration-skip:objects}a:active,a:hover{outline-width:0}abbr[title]{border-bottom:none;text-decoration:underline;text-decoration:underline dotted}b,strong{font-weight:inherit}b,strong{font-weight:bolder}code,kbd,samp{font-family:monospace, monospace;font-size:1em}dfn{font-style:italic}mark{background-color:#ff0;color:#000}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-0.25em}sup{top:-0.5em}audio,video{display:inline-block}audio:not([controls]){display:none;height:0}img{border-style:none}svg:not(:root){overflow:hidden}button,input,optgroup,select,textarea{font-family:sans-serif;font-size:100%;line-height:1.15;margin:0}button,input{overflow:visible}button,select{text-transform:none}button,html [type="button"],[type="reset"],[type="submit"]{-webkit-appearance:button}button::-moz-focus-inner,[type="button"]::-moz-focus-inner,[type="reset"]::-moz-focus-inner,[type="submit"]::-moz-focus-inner{border-style:none;padding:0}button:-moz-focusring,[type="button"]:-moz-focusring,[type="reset"]:-moz-focusring,[type="submit"]:-moz-focusring{outline:1px dotted ButtonText}fieldset{border:1px solid #c0c0c0;margin:0 2px;padding:0.35em 0.625em 0.75em}legend{box-sizing:border-box;color:inherit;display:table;max-width:100%;padding:0;white-space:normal}progress{display:inline-block;vertical-align:baseline}textarea{overflow:auto}[type="checkbox"],[type="radio"]{box-sizing:border-box;padding:0}[type="number"]::-webkit-inner-spin-button,[type="number"]::-webkit-outer-spin-button{height:auto}[type="search"]{-webkit-appearance:textfield;outline-offset:-2px}[type="search"]::-webkit-search-cancel-button,[type="search"]::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}details,menu{display:block}summary{display:list-item}canvas{display:inline-block}template{display:none}[hidden]{display:none}body,h1,h2,h3,h4,h5,h6,blockquote,p,pre,dl,dd,ol,ul,figure,hr,fieldset,legend{margin:0;padding:0}li>ol,li>ul{margin-bottom:0}table{border-collapse:collapse;border-spacing:0}address,h1,h2,h3,h4,h5,h6,blockquote,p,pre,dl,ol,ul,figure,hr,table,fieldset{margin-bottom:32px}dd,ol,ul{list-style-position:inside;margin-left:16px}@-webkit-keyframes spin{100%{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}@keyframes spin{100%{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}.icon{position:relative;display:inline-block;width:25px;height:25px;overflow:hidden;fill:currentColor}.icon__cnt{width:100%;height:100%;background:inherit;fill:inherit;pointer-events:none;transform:translateX(0);-ms-transform:translate(0.5px, -0.3px)}.icon--m{width:50px;height:50px}.icon--l{width:100px;height:100px}.icon--xl{width:150px;height:150px}.icon--xxl{width:200px;height:200px}.icon__spinner{position:absolute;top:0;left:0;width:100%;height:100%}.icon--ei-spinner .icon__spinner,.icon--ei-spinner-2 .icon__spinner{-webkit-animation:spin 1s steps(12) infinite;animation:spin 1s steps(12) infinite}.icon--ei-spinner-3 .icon__spinner{-webkit-animation:spin 1.5s linear infinite;animation:spin 1.5s linear infinite}.icon--ei-sc-facebook{fill:#3b5998}.icon--ei-sc-github{fill:#333}.icon--ei-sc-google-plus{fill:#dd4b39}.icon--ei-sc-instagram{fill:#3f729b}.icon--ei-sc-linkedin{fill:#0976b4}.icon--ei-sc-odnoklassniki{fill:#ed812b}.icon--ei-sc-skype{fill:#00aff0}.icon--ei-sc-soundcloud{fill:#f80}.icon--ei-sc-tumblr{fill:#35465c}.icon--ei-sc-twitter{fill:#55acee}.icon--ei-sc-vimeo{fill:#1ab7ea}.icon--ei-sc-vk{fill:#45668e}.icon--ei-sc-youtube{fill:#e52d27}.icon--ei-sc-pinterest{fill:#bd081c}.icon--ei-sc-telegram{fill:#0088cc}.highlight{margin:0;background:#fff}.highlighter-rouge .highlight{background:#FAFAFA}.highlight .c{color:#998;font-style:italic}.highlight .err{color:#a61717;background-color:#e3d2d2}.highlight .k{font-weight:bold}.highlight .o{font-weight:bold}.highlight .cm{color:#998;font-style:italic}.highlight .cp{color:#999;font-weight:bold}.highlight .c1{color:#998;font-style:italic}.highlight .cs{color:#999;font-weight:bold;font-style:italic}.highlight .gd{color:#000;background-color:#fdd}.highlight .gd .x{color:#000;background-color:#faa}.highlight .ge{font-style:italic}.highlight .gr{color:#a00}.highlight .gh{color:#999}.highlight .gi{color:#000;background-color:#dfd}.highlight .gi .x{color:#000;background-color:#afa}.highlight .go{color:#888}.highlight .gp{color:#555}.highlight .gs{font-weight:bold}.highlight .gu{color:#aaa}.highlight .gt{color:#a00}.highlight .kc{font-weight:bold}.highlight .kd{font-weight:bold}.highlight .kp{font-weight:bold}.highlight .kr{font-weight:bold}.highlight .kt{color:#458;font-weight:bold}.highlight .m{color:#099}.highlight .s{color:#d14}.highlight .na{color:#008080}.highlight .nb{color:#0086B3}.highlight .nc{color:#458;font-weight:bold}.highlight .no{color:#008080}.highlight .ni{color:#800080}.highlight .ne{color:#900;font-weight:bold}.highlight .nf{color:#900;font-weight:bold}.highlight .nn{color:#555}.highlight .nt{color:#000080}.highlight .nv{color:#008080}.highlight .ow{font-weight:bold}.highlight .w{color:#bbb}.highlight .mf{color:#099}.highlight .mh{color:#099}.highlight .mi{color:#099}.highlight .mo{color:#099}.highlight .sb{color:#d14}.highlight .sc{color:#d14}.highlight .sd{color:#d14}.highlight .s2{color:#d14}.highlight .se{color:#d14}.highlight .sh{color:#d14}.highlight .si{color:#d14}.highlight .sx{color:#d14}.highlight .sr{color:#009926}.highlight .s1{color:#d14}.highlight .ss{color:#990073}.highlight .bp{color:#999}.highlight .vc{color:#008080}.highlight .vg{color:#008080}.highlight .vi{color:#008080}.highlight .il{color:#099}body{color:#323232;font-size:19px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";line-height:32px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}*::selection{color:#fff;background:#84B97C}a{text-decoration:none;color:#323232;transition:.4s}a:hover,a:active,a:focus{text-decoration:underline}img{display:block;max-width:100%;font-style:italic}hr{height:1px;margin:32px 0;border:0;background-color:#E9EFF3}h1,h2,h3,h4,h5,h6{font-weight:inherit;line-height:initial;font-weight:600}h1{font-size:36px}h2{font-size:28px}h3{font-size:24px}h4{font-size:20px}h5{font-size:18px}h6{font-size:16px}blockquote{padding-left:16px;border-left:3px solid #2B5F72}.highlight .hll{background-color:#333333}.highlight{background:#111111;color:#ffffff}.highlight .c{color:#008800;font-style:italic;background-color:#0f140f}.highlight .err{color:#ffffff}.highlight .esc{color:#ffffff}.highlight .g{color:#ffffff}.highlight .k{color:#fb660a;font-weight:bold}.highlight .l{color:#ffffff}.highlight .n{color:#ffffff}.highlight .o{color:#ffffff}.highlight .x{color:#ffffff}.highlight .p{color:#ffffff}.highlight .ch{color:#008800;font-style:italic;background-color:#0f140f}.highlight .cm{color:#008800;font-style:italic;background-color:#0f140f}.highlight .cp{color:#ff0007;font-weight:bold;font-style:italic;background-color:#0f140f}.highlight .cpf{color:#008800;font-style:italic;background-color:#0f140f}.highlight .c1{color:#008800;font-style:italic;background-color:#0f140f}.highlight .cs{color:#008800;font-style:italic;background-color:#0f140f}.highlight .gd{color:#ffffff}.highlight .ge{color:#ffffff}.highlight .gr{color:#ffffff}.highlight .gh{color:#ffffff;font-weight:bold}.highlight .gi{color:#ffffff}.highlight .go{color:#444444;background-color:#222222}.highlight .gp{color:#ffffff}.highlight .gs{color:#ffffff}.highlight .gu{color:#ffffff;font-weight:bold}.highlight .gt{color:#ffffff}.highlight .kc{color:#fb660a;font-weight:bold}.highlight .kd{color:#fb660a;font-weight:bold}.highlight .kn{color:#fb660a;font-weight:bold}.highlight .kp{color:#fb660a}.highlight .kr{color:#fb660a;font-weight:bold}.highlight .kt{color:#cdcaa9;font-weight:bold}.highlight .ld{color:#ffffff}.highlight .m{color:#0086f7;font-weight:bold}.highlight .s{color:#0086d2}.highlight .na{color:#ff0086;font-weight:bold}.highlight .nb{color:#ffffff}.highlight .nc{color:#ffffff}.highlight .no{color:#0086d2}.highlight .nd{color:#ffffff}.highlight .ni{color:#ffffff}.highlight .ne{color:#ffffff}.highlight .nf{color:#ff0086;font-weight:bold}.highlight .nl{color:#ffffff}.highlight .nn{color:#ffffff}.highlight .nx{color:#ffffff}.highlight .py{color:#ffffff}.highlight .nt{color:#fb660a;font-weight:bold}.highlight .nv{color:#fb660a}.highlight .ow{color:#ffffff}.highlight .w{color:#888888}.highlight .mb{color:#0086f7;font-weight:bold}.highlight .mf{color:#0086f7;font-weight:bold}.highlight .mh{color:#0086f7;font-weight:bold}.highlight .mi{color:#0086f7;font-weight:bold}.highlight .mo{color:#0086f7;font-weight:bold}.highlight .sa{color:#0086d2}.highlight .sb{color:#0086d2}.highlight .sc{color:#0086d2}.highlight .dl{color:#0086d2}.highlight .sd{color:#0086d2}.highlight .s2{color:#0086d2}.highlight .se{color:#0086d2}.highlight .sh{color:#0086d2}.highlight .si{color:#0086d2}.highlight .sx{color:#0086d2}.highlight .sr{color:#0086d2}.highlight .s1{color:#0086d2}.highlight .ss{color:#0086d2}.highlight .bp{color:#ffffff}.highlight .fm{color:#ff0086;font-weight:bold}.highlight .vc{color:#fb660a}.highlight .vg{color:#fb660a}.highlight .vi{color:#fb660a}.highlight .vm{color:#fb660a}.highlight .il{color:#0086f7;font-weight:bold}pre,code{font-family:Courier,monospace}pre{overflow:auto;padding:32px;margin-bottom:16px;font-size:16px;line-height:25px;white-space:pre-wrap;word-wrap:break-word;word-break:break-all}li code,p code{padding:4px 8px}input[type='text'],input[type='tel'],input[type='number'],input[type='email'],select,textarea{width:100%;padding:16px;border:1px solid #E9EFF3;border-radius:0;outline:none;background-color:#fff;font-size:14px;appearance:none;transition:.4s}input[type='text']:hover,input[type='text']:active,input[type='text']:focus,input[type='tel']:hover,input[type='tel']:active,input[type='tel']:focus,input[type='number']:hover,input[type='number']:active,input[type='number']:focus,input[type='email']:hover,input[type='email']:active,input[type='email']:focus,select:hover,select:active,select:focus,textarea:hover,textarea:active,textarea:focus{border:1px solid #323232}.tablewrapper{overflow-x:auto;margin-left:auto;margin-right:auto}tr td,table tr th{border:1px solid #ccc;text-align:left;padding:6px 13px}table tr{border-top:1px solid #ccc;margin:0}table tr:nth-child(2n){background-color:#aaa}.o-grid{margin:0 auto;display:flex;flex-wrap:wrap;max-width:900px}.o-grid:after{content:'';display:table;clear:both}.o-grid .o-grid{margin-right:-16px;margin-left:-16px;padding:0}.o-grid--full{max-width:100vw}.o-grid__col{float:left;padding-right:16px;padding-left:16px}.o-grid__col--1-4-s{width:25%}.o-grid__col--1-3-s{width:33.3333333333%}.o-grid__col--2-4-s{width:50%}.o-grid__col--3-4-s{width:75%}.o-grid__col--4-4-s{width:100%}@media (min-width: 40em){.o-grid__col--1-4-m{width:25%}.o-grid__col--1-3-m{width:33.3333333333%}.o-grid__col--2-4-m{width:50%}.o-grid__col--3-4-m{width:75%}}@media (min-width: 64em){.o-grid__col--1-4-l{width:25%}.o-grid__col--1-3-l{width:33.3333333333%}.o-grid__col--2-4-l{width:50%}.o-grid__col--3-4-l{width:75%}}.o-grid__col--full{width:100%}.o-grid__col--center{margin:0 auto}.o-grid__col--end{margin-left:auto}.o-wrapper{padding:32px 0}.c-off-canvas-container{display:flex;min-height:100vh;flex-direction:column}.c-off-canvas-container .o-wrapper{flex:1 0 auto}.o-plain-list{margin:0;padding:0;list-style:none}.c-header__inner{padding:16px 0;border-bottom:1px solid #E9EFF3}.c-header__icon{vertical-align:middle}.c-logo__link{font-family:"Permanent Marker";font-size:36px;font-weight:300;transition:.4s}.c-logo__link:hover,.c-logo__link:active,.c-logo__link:focus{color:#84B97C;text-decoration:none}.c-nav__item{font-size:16px}.c-nav__link{display:block;transition:.4s}.c-nav__link--current{color:#84B97C}.home-template .c-nav__link--current:not(:hover){color:#323232}.c-nav__link:hover,.c-nav__link:active,.c-nav__link:focus{color:#84B97C;text-decoration:none}.c-off-canvas-toggle{float:right;position:relative;top:8px;z-index:10;height:19px;width:25px;cursor:pointer}.c-off-canvas-toggle__icon{position:absolute;left:0;height:1px;width:25px;background:#323232;cursor:pointer}.c-off-canvas-toggle__icon:before,.c-off-canvas-toggle__icon:after{content:'';display:block;height:100%;background-color:inherit;transition:.4s}.c-off-canvas-toggle__icon:before{transform:translateY(16px)}.c-off-canvas-toggle__icon:after{transform:translateY(7px)}.c-off-canvas-toggle--close .c-off-canvas-toggle__icon{height:2px;background-color:transparent}.c-off-canvas-toggle--close .c-off-canvas-toggle__icon:before,.c-off-canvas-toggle--close .c-off-canvas-toggle__icon:after{position:relative;visibility:visible;background:#323232}.c-off-canvas-toggle--close .c-off-canvas-toggle__icon:before{top:11px;transform:rotate(-45deg)}.c-off-canvas-toggle--close .c-off-canvas-toggle__icon:after{top:9px;transform:rotate(45deg)}.c-off-canvas-toggle--close{top:0;float:none;display:block;margin-left:auto}html,body{overflow-x:hidden}.c-off-canvas-content{position:fixed;top:0;right:0;width:300px;height:100%;padding:24px 32px;background-color:#fff;transform:translate3d(300px, 0, 0)}.c-off-canvas-container{transform:translate3d(0, 0, 0);transition:transform .4s cubic-bezier(0.16, 0.68, 0.43, 0.99)}.c-off-canvas-container.is-active{transform:translate3d(-300px, 0, 0)}.c-off-canvas-container.is-active:after{position:fixed;top:0;right:0;bottom:0;left:0;content:'';background-color:rgba(0,0,0,0.2)}.c-tags a{display:inline-block;padding:4px 16px;margin:0 8px 4px 0;font-size:12px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";line-height:25px;background-color:#FAFAFA;transition:.4s}.c-tags a:hover,.c-tags a:active,.c-tags a:focus{text-decoration:none;background-color:#FAFAFA}@media (max-width: 39.99em){.c-tags{margin-bottom:22px}}.c-btn{display:inline-block;padding:8px 32px;cursor:pointer;transition:.4s;text-align:center;vertical-align:middle;white-space:nowrap;line-height:inherit;border:0;border-radius:0;color:#fff;background-color:#207cdf;font-size:16px}.c-btn:hover,.c-btn:active,.c-btn:focus{text-decoration:none;background-color:#238cf6}.c-btn--full{width:100%}.c-btn--small{padding:4px 16px}.c-post-card{display:block;padding:32px 0;word-break:break-word;border-bottom:1px solid #E9EFF3}.c-post-card--first{padding-top:0}.c-post-card--last{padding-bottom:0;border-bottom:0}.c-post-card__title{margin-bottom:10px;font-size:19px;font-weight:600;transition:.4s}@media (min-width: 40em){.c-post-card__title{font-size:28px}}.c-post-card__excerpt{margin-bottom:10px}.c-post-card__date{display:block;color:#2B5F72;direction:ltr;font-size:12px;font-weight:600;line-height:22px;text-transform:uppercase}.c-post-card:hover{color:#323232;text-decoration:none}.c-post-card:hover .c-post-card__title{color:#84B97C}.c-pagination{text-transform:uppercase;transition:.4s}.c-pagination:hover,.c-pagination:active,.c-pagination:focus{color:#84B97C;text-decoration:none}.c-pagination__text{position:relative;font-size:14px;letter-spacing:2px}.c-pagination__text--prev{left:-16px}.c-pagination__text--next{right:-16px}.c-pagination__icon{vertical-align:text-top}.c-pagination__icon--prev{left:-8px}.c-pagination__icon--next{right:-8px}.c-post{margin:0 auto;max-width:900px}.c-post__title{font-size:24px;margin-bottom:16px}@media (min-width: 40em){.c-post__title{font-size:28px}}.c-post__date{position:relative;padding-top:16px;display:block;text-align:center;margin-bottom:16px;font-size:14px;font-weight:600;line-height:22px;color:#2B5F72}.c-post__date:after{position:absolute;content:'';top:0;left:50%;height:1px;width:64px;background:#FAFAFA;transform:translateX(-50%)}.c-post__image{margin:0 auto 16px}.c-content a:not(.c-btn){text-decoration:underline;text-decoration-skip:ink}.c-content a:not(.c-btn):hover,.c-content a:not(.c-btn):active,.c-content a:not(.c-btn):focus{color:#84B97C}.twitter-tweet,.fluid-width-video-wrapper{margin-bottom:16px !important}.c-social-nav__item{display:inline-block}.c-social-nav__icon{fill:#323232;vertical-align:middle;transition:.4s}.c-social-nav__icon:hover,.c-social-nav__icon:active,.c-social-nav__icon:focus{fill:#84B97C}.c-footer{padding:32px 0;background-color:#FAFAFA}@font-face{font-family:'Permanent Marker';font-style:normal;font-weight:400;src:local("Permanent Marker Regular"),local("PermanentMarker-Regular"),url(https://fonts.gstatic.com/s/permanentmarker/v9/Fh4uPib9Iyv2ucM6pGQMWimMp004La2Cfw.woff2) format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}.u-hidden{display:none}.u-hidden-visually{border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px}.u-font-medium{font-size:16px;line-height:25px}.u-font-small{font-size:14px;line-height:22px}.u-font-tiny{font-size:12px;line-height:19px}.u-text-left{text-align:left}.u-text-right{text-align:right}.u-text-center{text-align:center}.u-text-justify{text-align:justify}.u-inline{display:inline}.u-block{display:block}.u-inline-block{display:inline-block}.u-left{float:left}.u-right{float:right}.u-clearfix:after{content:'';display:table;clear:both}
+
+  </style>
+</head>
+
+<body>
+
+  <div class='js-off-canvas-container c-off-canvas-container'>
+    <header class='c-header'>
+
+  <div class='o-grid'>
+    <div class='o-grid__col o-grid__col--full'>
+      <div class='c-header__inner'>
+
+        <div class='o-grid'>
+          <div class='o-grid__col o-grid__col--3-4-s'>
+            <div class='c-logo u-text-left'>
+              <a class='c-logo__link' href='/'>katadelos</a>
+            </div>
+          </div>
+
+          <div class='o-grid__col o-grid__col--1-4-s'>
+            <label class='js-off-canvas-toggle c-off-canvas-toggle' aria-label='Toggle navigation'>
+              <span class='c-off-canvas-toggle__icon'></span>
+            </label>
+          </div>
+
+          <div class='o-grid__col o-grid__col--1-4-s'>
+            <div class='c-off-canvas-content'>
+              <label class='js-off-canvas-toggle c-off-canvas-toggle c-off-canvas-toggle--close'>
+                <span class='c-off-canvas-toggle__icon'></span>
+              </label>
+
+              <ul class='c-nav o-plain-list '>
+                
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+    
+  
+
+
+
+                <li class='c-nav__item' role='presentation'>
+                  <a class='c-nav__link' href='tag/kindle'>Kindle</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</header>
+
+
+    
+
+
+  <meta itemprop='og:image' content='https://katadelos.github.io/images/openwrt1.jpg'>
+
+
+<div class='o-wrapper'>
+  <div class='o-grid'>
+    <div class='o-grid__col'>
+      <article class='c-post' itemscope itemtype='http://schema.org/BlogPosting'>
+
+        <h1 class='c-post__title u-text-center'>Installing OpenWrt 19.07.3 on BT Homehub 5A</h1>
+
+        <time class='c-post__date' datetime='2020-09-30T00:00:00+01:00' itemprop='datePublished'>30 Sep 2020</time>
+
+        <div class='c-content' itemprop='articleBody'>
+          
+  <img src='/images/openwrt1.jpg' class='c-post__image' alt='Installing OpenWrt 19.07.3 on BT Homehub 5A'>
+
+
+          <p>After moving into a new property a few months ago, the drawbacks of using the ISP supplied firmware included on my router rapidly started to become apparent.</p>
+
+<p>As a rule, ISP supplied firmwares tend to have poor support for custom DNS servers (no PiHole for you), lack an SSH server (ruling out remote administration) and do not allow the installation of software supplied by a third party, among other drawbacks.</p>
+
+<p>This is not a conspiracy against end users - removing features that are infrequently used makes sense from a business perspective when you consider the extra man-hours required to develop, test and support them. Additionally, the attack surface of a device can be reduced by limiting the number of features capable of causing security issues if improperly configured.</p>
+
+<p>Regardless, it’s still frustrating using a router that offers few of the features needed to have control over your home network.</p>
+
+<p>Fortunately, the OpenWrt project offers an alternative firmware that is available for many embedded devices. I’ve been using it both professionally and at home for a number of years now, mostly for creating additional WLAN access points or repeaters connected to existing networks. OpenWrt has the advantages of a decent web interface (LUCI), shell access using the Dropbear SSH server and the option of installing extra software using the <code class="highlighter-rouge">opkg</code> package manager.</p>
+
+<p>However, there are some significant drawbacks depending on the device that you use. Support for some devices lags behind others and is dependent on both the level of interest that the community takes in that device and the availability of open source drivers for the hardware within the router. This means that 2.4Ghz WiFi, 5Ghz WiFi, the modem or some combination thereof may not be functional.</p>
+
+<p>This leaves us with the choice of buying either a new or used router with good support for OpenWrt. I prefer to reuse old hardware whenever it is practical and was lucky enough to have a BT Homehub 5A lying about unused. This router is a popular target for OpenWrt and has excellent hardware support but the installation process is quite convoluted, requiring you to solder wires to test points exposing a serial port and the boot mode selector.</p>
+
+<p>You then need to load a modified version of U-Boot over the serial connection that allows booting via TFTP. This, in turn, is used to load a minimal OpenWrt image that allows you to back up the existing firmware and patch U-Boot to enable console access and modify the boot variables. Once this is done, you can install a full release of OpenWrt from a USB drive.</p>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<p>To install OpenWrt on this device, you will need to download the following files:</p>
+<ul>
+  <li><a href="https://github.com/mkresin/BTHH5a-installimage/releases/download/v0.1/lede-lantiq-bthomehubv5a_ram-u-boot.asc">U-Boot with TFTP</a></li>
+  <li><a href="https://github.com/mkresin/BTHH5a-installimage/releases/download/v0.1/lede-lantiq-xrx200-BTHOMEHUBV5A-installimage.bin">Minimal install image</a></li>
+  <li><a href="http://downloads.openwrt.org/releases/19.07.3/targets/lantiq/xrx200/openwrt-19.07.3-lantiq-xrx200-bt_homehub-v5a-squashfs-sysupgrade.bin">Full OpenWrt image</a></li>
+  <li>FAT32 formatted USB stick</li>
+  <li>USB-Serial converter</li>
+  <li>Ethernet cable</li>
+  <li>Soldering iron (preferably with a fine tip) + solder</li>
+  <li>Fine wire</li>
+</ul>
+
+<p>There are a number of USB to Serial converters available, usually based on the CH340/341, CP102 or FT232RL chips. Any converter that supports 115200 bauds at 5 volts will do; in this article I am using one based on the CP102. A USB extension cable is not necessary but allows you some additional flexibility when working on the router.</p>
+
+<p>You will also need a serial terminal emulator and TFTP server. You could use <code class="highlighter-rouge">screen</code>, <code class="highlighter-rouge">minicom</code>, <code class="highlighter-rouge">picocom</code> or a variety of others as your serial terminal; my personal preference is for <code class="highlighter-rouge">picocom</code>. For the TFTP server, I used <code class="highlighter-rouge">aftpd</code>.</p>
+
+<hr />
+<h2 id="opening-the-case">Opening the case</h2>
+<p>This is perhaps the most difficult part of the installation. You will need to use a plastic card or spudger to work open the clips inside the case to release the front section and expose the PCB within. <a href="https://www.youtube.com/user/jfinnie78">James Finnie</a> has created a video detailing this process which I have included below.</p>
+<iframe class="yt" allowfullscreen="" src="https://www.youtube.com/embed/XhE_QpLFvpM"></iframe>
+
+<hr />
+<h2 id="soldering-to-test-points">Soldering to test points</h2>
+
+<p><img src="/images/openwrt2.jpg" alt="Dodgy soldering job" /></p>
+
+<p>You will now need to solder wires to the PCB of the router at the following locations:</p>
+
+<div class="tablewrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Location</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Right of R77</td>
+        <td>Serial RX</td>
+      </tr>
+      <tr>
+        <td>Right of R78</td>
+        <td>Serial TX</td>
+      </tr>
+      <tr>
+        <td>Above R45</td>
+        <td>Boot Select</td>
+      </tr>
+      <tr>
+        <td>Left USB</td>
+        <td>GND</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<p>I used Dupont wires terminated with female connectors for this. The Dupont connectors made it easier to attach the wires to my serial converter but if I was to do this again, I’d probably use finer single core wire considering the size of the pads. Once the wires were attached, I taped them down to the PCB and case to provide some strain relief.</p>
+
+<hr />
+<h2 id="booting-into-uart-mode-and-loading-u-boot">Booting into UART mode and loading U-Boot</h2>
+<p>You will need to connect the RX and TX wires to the matching pins on your serial converter and bridge the Boot Select wire to the ground wire with a jumper wire or paper clip. When ready, open a <code class="highlighter-rouge">picocom</code> session on your serial converter - on Linux, the serial converter is usually located within the <code class="highlighter-rouge">/dev/</code> directory with a name beginning with <code class="highlighter-rouge">ttyUSB*</code> or <code class="highlighter-rouge">ttyACM*</code>:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">picocom -b 115200 /dev/ttyUSB0</code></pre>
+</figure>
+
+<p>Turn on the router and wait until you see the output below:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">ROM VER: 1.1.4
+CFG 04
+UART</code></pre>
+</figure>
+
+<p>When you see the output above, quickly remove the bridge wire between Boot Select and ground, then attach the ground wire to your serial converter.</p>
+
+<p>In a separate terminal, use <code class="highlighter-rouge">cat</code> to send the U-Boot image to the device:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">cat lede-lantiq-bthomehubv5a_ram-u-boot.asc &gt; /dev/ttyUSB0</code></pre>
+</figure>
+
+<p>This will take a few minutes to load. Once this is completed, you should see output in <code class="highlighter-rouge">picocom</code> similar to that below:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">U-Boot 2013.10-openwrt4 (Nov 05 2016 - 21:13:45) BTHOMEHUBV5A
+
+Board: BT Home Hub 5A
+SoC:   Lantiq VRX268 v1.2
+CPU:   125 MHz
+IO:    125 MHz
+BUS:   125 MHz
+BOOT:  UART
+DRAM:  128 MiB
+NAND:  128 MiB
+Using default environment
+
+In:    serial
+Out:   serial
+Err:   serial
+Net:   ltq-eth
+Hit any key to stop autoboot:  0 
+UBI: attaching mtd1 to ubi0
+UBI: physical eraseblock size:   131072 bytes (128 KiB)
+UBI: logical eraseblock size:    129024 bytes
+UBI: smallest flash I/O unit:    2048
+UBI: sub-page size:              512
+UBI: VID header offset:          512 (aligned 512)
+UBI: data offset:                2048
+UBI: attached mtd1 to ubi0
+UBI: MTD device name:            "mtd=0"
+UBI: MTD device size:            126 MiB
+UBI: number of good PEBs:        1012
+UBI: number of bad PEBs:         0
+UBI: max. allowed volumes:       128
+UBI: wear-leveling threshold:    4096
+UBI: number of internal volumes: 1
+UBI: number of user volumes:     3
+UBI: available PEBs:             9
+UBI: total number of reserved PEBs: 1003
+UBI: number of PEBs reserved for bad PEB handling: 10
+UBI: max/mean erase counter: 1757/1260
+Read 0 bytes from volume kernel to 81000000
+Volume kernel not found!
+Wrong Image Format for bootm command
+ERROR: can't get kernel image!
+BTHOMEHUBV5A #</code></pre>
+</figure>
+
+<hr />
+<h2 id="loading-the-install-image">Loading the install image</h2>
+<p>The router is now ready to load a firmware image over TFTP. You will need to configure our Ethernet interface to temporarily use a static IP address - this build of U-Boot is configured to load an image from <code class="highlighter-rouge">192.168.1.2</code>.</p>
+
+<p>To do so, disconnect any existing connection on this interface and issue the following command, replacing <code class="highlighter-rouge">eth0</code> with the name of your Ethernet interface if necessary:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">sudo ifconfig eth0 192.168.1.2</code></pre>
+</figure>
+
+<p>Next, prepare the directory that you will serve the firmware image from and move the minimal install image to it:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">sudo mkdir /tftpboot
+sudo chmod 777 /tftpboot
+mv ~/Downloads/lede-lantiq-xrx200-BTHOMEHUBV5A-installimage.bin /tftpboot</code></pre>
+</figure>
+
+<p>Finally, start the TFTP server. This needs to run as root as the TFTP protocol uses port 69, a privileged port:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">sudo atftpd --bind-address 192.168.1.2 --daemon --no-fork /tftpboot/</code></pre>
+</figure>
+
+<p>If you are running Ubuntu 18.04/20.04, this command may exit immediately. This is because the package provided with this distribution adds an entry to <code class="highlighter-rouge">/etc/inetd.conf</code> which runs <code class="highlighter-rouge">atftpd</code> with different parameters to those above. This can be verified using <code class="highlighter-rouge">netstat</code>:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">user@ubuntu:~$ sudo netstat -plunt | grep :69
+udp        0      0 0.0.0.0:69              0.0.0.0:*                           861/inetutils-inetd </code></pre>
+</figure>
+
+<p>To avoid this, stop the <code class="highlighter-rouge">inetutils-inetd</code> service:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">sudo systemctl stop inetutils-inetd.service</code></pre>
+</figure>
+
+<p>To load the minimal image, issue the following command within the <code class="highlighter-rouge">picocom</code> session:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">BTHOMEHUBV5A # tftpboot 0x81000000 lede-lantiq-xrx200-BTHOMEHUBV5A-installimage.bin; bootm 0x81000000</code></pre>
+</figure>
+
+<p>Once the image has loaded, you should see output similar to this:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">ltq_phy: addr 0, link 0, speed 10, duplex 0
+ltq_phy: addr 1, link 0, speed 10, duplex 0
+ltq_phy: addr 17, link 0, speed 10, duplex 0
+ltq_phy: addr 19, link 1, speed 1000, duplex 1
+ltq_phy: addr 5, link 0, speed 10, duplex 0
+Using ltq-eth device
+TFTP from server 192.168.1.2; our IP address is 192.168.1.1
+Filename 'lede-lantiq-xrx200-BTHOMEHUBV5A-installimage.bin'.
+Load address: 0x81000000
+Loading: #################################################################
+	 #################################################################
+	 #################################################################
+	 ##########################################
+done
+Bytes transferred = 3474686 (3504fe hex)
+## Booting kernel from Legacy Image at 81000000 ...
+   Image Name:   MIPS LEDE Linux-4.4.30
+   Created:      2016-11-05  20:35:36 UTC
+   Image Type:   MIPS Linux Kernel Image (lzma compressed)
+   Data Size:    3474622 Bytes = 3.3 MiB
+   Load Address: 80002000
+   Entry Point:  80002000
+   Verifying Checksum ... OK
+   Uncompressing Kernel Image ... OK
+
+Starting kernel ...
+
+[    0.000000] Linux version 4.4.30 (mkresin@desktop) (gcc version 5.4.0 (LEDE GCC 5.4.0 r2112+5) ) #0 Sat Nov 5 20:35:36 2016
+[    0.000000] SoC: xRX200 rev 1.2
+[    0.000000] bootconsole [early0] enabled
+[    0.000000] CPU0 revision is: 00019556 (MIPS 34Kc)
+[    0.000000] MIPS: machine is BTHOMEHUBV5A - BT Home Hub 5A
+...</code></pre>
+</figure>
+
+<h2 id="backing-up-original-firmware-and-preparing-for-install">Backing up original firmware and preparing for install</h2>
+<p>Once the minimal image has finished booting, you will presented with the guide below:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">*******************************************************************************
+*    Guide for installing LEDE onto a BT Home Hub 5 Type A/Plusnet Hub One    *
+*******************************************************************************
+
+You need an USB flash drive with at least 512MB free capacity, formatted as
+FAT32 or exFAT, attached to the Hub. The attached flash drive will be
+accessible at /tmp/mounts/&lt;directory&gt;.
+
+To install LEDE, the USB flash drive must have a copy of the file:
+  lede-lantiq-xrx200-BTHOMEHUBV5A-squashfs-sysupgrade.bin
+
+To restore the stock Firmware, the USB flash drive must have a have a copy
+of the nanddump backup file (hh5a.nanddump) containing the stock Firmware.
+
+LIST OF COMMANDS
+
+  To create a backup of the installed firmware (Take care to not overwrite
+  any previously made backup):
+      nanddump --file /tmp/mounts/&lt;directory&gt;/hh5a.nanddump /dev/mtd4
+
+  To install LEDE:
+      prepare
+
+  To restore stock firmware:
+      restore
+
+TO UPGRADE FROM OpenWrt OR LEDE PRIOR TO XXX:
+
+  Restore the stock firmware and do a fresh install of LEDE.
+
+If you don't have a backup of the stock firmware from your Hub, use the
+experimental 'migrate' script. It is offered with no guarantee of success. 
+You are strongly advised to restore the stock firmware.</code></pre>
+</figure>
+
+<p>From here, things are fairly self explanatory.</p>
+
+<p>The first step is to create a backup of the original firmware. This will allow you to restore the original state of the device, including the bootloader and firmware. The backup is unique to each device, as it contains MAC addresses and calibration data for the wireless radios, among other things.</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">root@lede:/# nanddump --file /tmp/mounts/hh5.dump /dev/mtd4
+ECC failed: 0
+ECC corrected: 0
+Number of bad blocks: 0
+Number of bbt blocks: 4
+Block size 131072, page size 2048, OOB size 64
+Dumping data starting at 0x00000000 and ending at 0x08000000...</code></pre>
+</figure>
+
+<p>This will take a while to complete (around 25 minutes in this case but others have reported shorter backup times). Once this is complete, you can prepare the router for the installation of OpenWRT:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">root@lede:/# prepare
+
+This script will erase parts of the Nand flash memory on this Hub, and then
+prepare it for running Sysupgrade.
+
+
+WARNING: DO NOT CONTINUE unless you have saved a backup of the original firmware
+         to your COMPUTER or other storage device!
+
+
+DO NOT POWER OFF THE DEVICE DURING THIS PROCEDURE.
+
+
+Please enter YESIHAVEABACKUP to continue:
+YESIHAVEABACKUP
+
+Starting installation...
+
+Please select you device:
+
+a) BT Home Hub 5 Type A
+b) Plusnet Hub One
+
+a
+
+WRITING custom uboot-env to unlock u-boot console and update bootcmd...
+Erasing 128 Kibyte @ 0 -- 100 % complete 
+Writing data to block 0 at offset 0x0
+
+REMOVING ubi volume OpenRG...
+[ 1688.651185] ubi0: reserved more 1 PEBs for bad PEB handling
+
+REMOVING ubi volume FFS...
+
+
+Preparation completed!
+
+Your attached USB media is mounted as a subdirectory at /tmp/mounts/
+
+To install LEDE, run:
+
+  sysupgrade /tmp/mounts/&lt;directory&gt;/lede-lantiq-xrx200-BTHOMEHUBV5A-squashfs-sysupgrade.bin
+
+Sysupgrade will automatically restart your device when it has finished.
+If the UART prompt appears, power-cycle your device!
+The hub should now boot up using LEDE.</code></pre>
+</figure>
+
+<p>The final step is to run the <code class="highlighter-rouge">sysupgrade</code> utility to install a full version of OpenWRT.</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">root@lede:/# sysupgrade /tmp/mount/openwrt-19.07.3-lantiq-xrx200-bt_homehub-v5a-squashfs-sysupgrade.bin 
+Cannot save config while running from ramdisk.
+killall: watchdog: no process killed
+Watchdog handover: fd=3
+- watchdog -
+killall: telnetd: no process killed
+Sending TERM to remaining processes ... ubusd logd netifd odhcpd mountd ntpd dnsmasq 
+Sending KILL to remaining processes ... 
+Volume ID 0, size 16 LEBs (2064384 bytes, 2.0 MiB), LEB size 129024 bytes (126.0 KiB), dynamic, name "kernel", alignment 1
+Volume ID 1, size 30 LEBs (3870720 bytes, 3.7 MiB), LEB size 129024 bytes (126.0 KiB), dynamic, name "rootfs", alignment 1
+Set volume size to 121411584
+Volume ID 2, size 941 LEBs (121411584 bytes, 115.8 MiB), LEB size 129024 bytes (126.0 KiB), dynamic, name "rootfs_data", alignment 1
+sysupgrade successful</code></pre>
+</figure>
+
+<p>OpenWRT is now installed! My router rebooted into UART mode on the first reboot, but this was easily fixed by following the guidance in the output of <code class="highlighter-rouge">prepare</code> and power-cycling the router.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>Although installing OpenWRT over the serial port probably felt quite intimidating, there are a number of benefits gained by doing so:</p>
+
+<ul>
+  <li>A router with performance and functionality that is usually found only in much more expensive routers</li>
+  <li>Skills that can be useful when debricking or reverse engineering other embedded devices</li>
+  <li>By re-using an old router, you’ve made a small contribution to reducing the amount of e-waste in the world</li>
+</ul>
+
+<p>I will not be covering the setup of this device in this article (it’s destined for a mundane life hooked up to an ADSL line), but some useful resources can be found here:</p>
+
+<ul>
+  <li><a href="https://openwrt.org/toh/bt/homehub_v5a">[OpenWrt Wiki] BT HomeHub 5.0 Type A</a></li>
+  <li><a href="https://openwrt.org/docs/guide-quick-start/start">[OpenWrt Wiki] Quick start guide for OpenWrt/LEDE installation</a></li>
+  <li><a href="https://quantumwarp.com/kb/articles/25-dsl-broadband/898-install-lede-on-a-bt-home-hub-5-plusnet-one-router">[QuantumWarp] Install LEDE on a BT Home Hub 5 / Plusnet One Router </a></li>
+</ul>
+
+        </div>
+
+        <div class='c-tags'>
+          
+            <a href='/tag/linux'>linux</a>
+          
+            <a href='/tag/hardware'>hardware</a>
+          
+            <a href='/tag/openwrt'>openwrt</a>
+          
+        </div>
+
+        <hr>
+
+
+      </article>
+    </div>
+  </div>
+</div>
+
+
+    <footer class='c-footer'>
+  <div class='o-grid'>
+    <div class='o-grid__col o-grid__col--full'>
+
+      <ul class='o-plain-list c-social-nav u-text-center'>
+        <li class='c-social-nav__item'>
+          <a href='https://github.com/katadelos' target='_blank'>
+            <span class='c-social-nav__icon' data-icon='ei-sc-github' data-size='s'></span>
+          </a>
+        </li>
+        <li class='c-social-nav__item'>
+          <a href='mailto:katadelos@protonmail.com' target='_blank'>
+            <span class='c-social-nav__icon' data-icon='ei-envelope' data-size='s'></span>
+          </a>
+        </li>
+      </ul>
+
+    </div>
+  </div>
+</footer>
+
+  </div>
+
+  <script src="/js/jquery-3.1.1.min.js"> </script>
+  <script src="/js/evil-icons.min.js">   </script>
+  <script src="/js/jquery.fitvids.js">   </script>
+  <script src="/js/app.js">              </script>
+</body>
+
+</html>
