@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+  <title>Cross-Compiling MicroPython for Kindle Paperwhite 3</title>
+  <meta name='description' content="MicroPython is (according to their website) “a lean and efficient implementation of the Python 3 programming language that includes a small subset of the Pyt...">
+  <link rel='canonical' href="https://katadelos.github.io/2020/10/04/cross-compiling-micropython-kindle/">
+  <link rel='alternate' type='application/rss+xml' title='katadelos' href="https://katadelos.github.io/feed.xml">
+
+  <style>
+    
+
+    html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}/*! normalize.css v5.0.0 | MIT License | github.com/necolas/normalize.css */html{font-family:sans-serif;line-height:1.15;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}article,aside,footer,header,nav,section{display:block}h1{font-size:2em;margin:0.67em 0}figcaption,figure,main{display:block}figure{margin:1em 40px}hr{box-sizing:content-box;height:0;overflow:visible}pre{font-family:monospace, monospace;font-size:1em}a{background-color:transparent;-webkit-text-decoration-skip:objects}a:active,a:hover{outline-width:0}abbr[title]{border-bottom:none;text-decoration:underline;text-decoration:underline dotted}b,strong{font-weight:inherit}b,strong{font-weight:bolder}code,kbd,samp{font-family:monospace, monospace;font-size:1em}dfn{font-style:italic}mark{background-color:#ff0;color:#000}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-0.25em}sup{top:-0.5em}audio,video{display:inline-block}audio:not([controls]){display:none;height:0}img{border-style:none}svg:not(:root){overflow:hidden}button,input,optgroup,select,textarea{font-family:sans-serif;font-size:100%;line-height:1.15;margin:0}button,input{overflow:visible}button,select{text-transform:none}button,html [type="button"],[type="reset"],[type="submit"]{-webkit-appearance:button}button::-moz-focus-inner,[type="button"]::-moz-focus-inner,[type="reset"]::-moz-focus-inner,[type="submit"]::-moz-focus-inner{border-style:none;padding:0}button:-moz-focusring,[type="button"]:-moz-focusring,[type="reset"]:-moz-focusring,[type="submit"]:-moz-focusring{outline:1px dotted ButtonText}fieldset{border:1px solid #c0c0c0;margin:0 2px;padding:0.35em 0.625em 0.75em}legend{box-sizing:border-box;color:inherit;display:table;max-width:100%;padding:0;white-space:normal}progress{display:inline-block;vertical-align:baseline}textarea{overflow:auto}[type="checkbox"],[type="radio"]{box-sizing:border-box;padding:0}[type="number"]::-webkit-inner-spin-button,[type="number"]::-webkit-outer-spin-button{height:auto}[type="search"]{-webkit-appearance:textfield;outline-offset:-2px}[type="search"]::-webkit-search-cancel-button,[type="search"]::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}details,menu{display:block}summary{display:list-item}canvas{display:inline-block}template{display:none}[hidden]{display:none}body,h1,h2,h3,h4,h5,h6,blockquote,p,pre,dl,dd,ol,ul,figure,hr,fieldset,legend{margin:0;padding:0}li>ol,li>ul{margin-bottom:0}table{border-collapse:collapse;border-spacing:0}address,h1,h2,h3,h4,h5,h6,blockquote,p,pre,dl,ol,ul,figure,hr,table,fieldset{margin-bottom:32px}dd,ol,ul{list-style-position:inside;margin-left:16px}@-webkit-keyframes spin{100%{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}@keyframes spin{100%{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}.icon{position:relative;display:inline-block;width:25px;height:25px;overflow:hidden;fill:currentColor}.icon__cnt{width:100%;height:100%;background:inherit;fill:inherit;pointer-events:none;transform:translateX(0);-ms-transform:translate(0.5px, -0.3px)}.icon--m{width:50px;height:50px}.icon--l{width:100px;height:100px}.icon--xl{width:150px;height:150px}.icon--xxl{width:200px;height:200px}.icon__spinner{position:absolute;top:0;left:0;width:100%;height:100%}.icon--ei-spinner .icon__spinner,.icon--ei-spinner-2 .icon__spinner{-webkit-animation:spin 1s steps(12) infinite;animation:spin 1s steps(12) infinite}.icon--ei-spinner-3 .icon__spinner{-webkit-animation:spin 1.5s linear infinite;animation:spin 1.5s linear infinite}.icon--ei-sc-facebook{fill:#3b5998}.icon--ei-sc-github{fill:#333}.icon--ei-sc-google-plus{fill:#dd4b39}.icon--ei-sc-instagram{fill:#3f729b}.icon--ei-sc-linkedin{fill:#0976b4}.icon--ei-sc-odnoklassniki{fill:#ed812b}.icon--ei-sc-skype{fill:#00aff0}.icon--ei-sc-soundcloud{fill:#f80}.icon--ei-sc-tumblr{fill:#35465c}.icon--ei-sc-twitter{fill:#55acee}.icon--ei-sc-vimeo{fill:#1ab7ea}.icon--ei-sc-vk{fill:#45668e}.icon--ei-sc-youtube{fill:#e52d27}.icon--ei-sc-pinterest{fill:#bd081c}.icon--ei-sc-telegram{fill:#0088cc}.highlight{margin:0;background:#fff}.highlighter-rouge .highlight{background:#FAFAFA}.highlight .c{color:#998;font-style:italic}.highlight .err{color:#a61717;background-color:#e3d2d2}.highlight .k{font-weight:bold}.highlight .o{font-weight:bold}.highlight .cm{color:#998;font-style:italic}.highlight .cp{color:#999;font-weight:bold}.highlight .c1{color:#998;font-style:italic}.highlight .cs{color:#999;font-weight:bold;font-style:italic}.highlight .gd{color:#000;background-color:#fdd}.highlight .gd .x{color:#000;background-color:#faa}.highlight .ge{font-style:italic}.highlight .gr{color:#a00}.highlight .gh{color:#999}.highlight .gi{color:#000;background-color:#dfd}.highlight .gi .x{color:#000;background-color:#afa}.highlight .go{color:#888}.highlight .gp{color:#555}.highlight .gs{font-weight:bold}.highlight .gu{color:#aaa}.highlight .gt{color:#a00}.highlight .kc{font-weight:bold}.highlight .kd{font-weight:bold}.highlight .kp{font-weight:bold}.highlight .kr{font-weight:bold}.highlight .kt{color:#458;font-weight:bold}.highlight .m{color:#099}.highlight .s{color:#d14}.highlight .na{color:#008080}.highlight .nb{color:#0086B3}.highlight .nc{color:#458;font-weight:bold}.highlight .no{color:#008080}.highlight .ni{color:#800080}.highlight .ne{color:#900;font-weight:bold}.highlight .nf{color:#900;font-weight:bold}.highlight .nn{color:#555}.highlight .nt{color:#000080}.highlight .nv{color:#008080}.highlight .ow{font-weight:bold}.highlight .w{color:#bbb}.highlight .mf{color:#099}.highlight .mh{color:#099}.highlight .mi{color:#099}.highlight .mo{color:#099}.highlight .sb{color:#d14}.highlight .sc{color:#d14}.highlight .sd{color:#d14}.highlight .s2{color:#d14}.highlight .se{color:#d14}.highlight .sh{color:#d14}.highlight .si{color:#d14}.highlight .sx{color:#d14}.highlight .sr{color:#009926}.highlight .s1{color:#d14}.highlight .ss{color:#990073}.highlight .bp{color:#999}.highlight .vc{color:#008080}.highlight .vg{color:#008080}.highlight .vi{color:#008080}.highlight .il{color:#099}body{color:#323232;font-size:19px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";line-height:32px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}*::selection{color:#fff;background:#84B97C}a{text-decoration:none;color:#323232;transition:.4s}a:hover,a:active,a:focus{text-decoration:underline}img{display:block;max-width:100%;font-style:italic}hr{height:1px;margin:32px 0;border:0;background-color:#E9EFF3}h1,h2,h3,h4,h5,h6{font-weight:inherit;line-height:initial;font-weight:600}h1{font-size:36px}h2{font-size:28px}h3{font-size:24px}h4{font-size:20px}h5{font-size:18px}h6{font-size:16px}blockquote{padding-left:16px;border-left:3px solid #2B5F72}.highlight .hll{background-color:#333333}.highlight{background:#111111;color:#ffffff}.highlight .c{color:#008800;font-style:italic;background-color:#0f140f}.highlight .err{color:#ffffff}.highlight .esc{color:#ffffff}.highlight .g{color:#ffffff}.highlight .k{color:#fb660a;font-weight:bold}.highlight .l{color:#ffffff}.highlight .n{color:#ffffff}.highlight .o{color:#ffffff}.highlight .x{color:#ffffff}.highlight .p{color:#ffffff}.highlight .ch{color:#008800;font-style:italic;background-color:#0f140f}.highlight .cm{color:#008800;font-style:italic;background-color:#0f140f}.highlight .cp{color:#ff0007;font-weight:bold;font-style:italic;background-color:#0f140f}.highlight .cpf{color:#008800;font-style:italic;background-color:#0f140f}.highlight .c1{color:#008800;font-style:italic;background-color:#0f140f}.highlight .cs{color:#008800;font-style:italic;background-color:#0f140f}.highlight .gd{color:#ffffff}.highlight .ge{color:#ffffff}.highlight .gr{color:#ffffff}.highlight .gh{color:#ffffff;font-weight:bold}.highlight .gi{color:#ffffff}.highlight .go{color:#444444;background-color:#222222}.highlight .gp{color:#ffffff}.highlight .gs{color:#ffffff}.highlight .gu{color:#ffffff;font-weight:bold}.highlight .gt{color:#ffffff}.highlight .kc{color:#fb660a;font-weight:bold}.highlight .kd{color:#fb660a;font-weight:bold}.highlight .kn{color:#fb660a;font-weight:bold}.highlight .kp{color:#fb660a}.highlight .kr{color:#fb660a;font-weight:bold}.highlight .kt{color:#cdcaa9;font-weight:bold}.highlight .ld{color:#ffffff}.highlight .m{color:#0086f7;font-weight:bold}.highlight .s{color:#0086d2}.highlight .na{color:#ff0086;font-weight:bold}.highlight .nb{color:#ffffff}.highlight .nc{color:#ffffff}.highlight .no{color:#0086d2}.highlight .nd{color:#ffffff}.highlight .ni{color:#ffffff}.highlight .ne{color:#ffffff}.highlight .nf{color:#ff0086;font-weight:bold}.highlight .nl{color:#ffffff}.highlight .nn{color:#ffffff}.highlight .nx{color:#ffffff}.highlight .py{color:#ffffff}.highlight .nt{color:#fb660a;font-weight:bold}.highlight .nv{color:#fb660a}.highlight .ow{color:#ffffff}.highlight .w{color:#888888}.highlight .mb{color:#0086f7;font-weight:bold}.highlight .mf{color:#0086f7;font-weight:bold}.highlight .mh{color:#0086f7;font-weight:bold}.highlight .mi{color:#0086f7;font-weight:bold}.highlight .mo{color:#0086f7;font-weight:bold}.highlight .sa{color:#0086d2}.highlight .sb{color:#0086d2}.highlight .sc{color:#0086d2}.highlight .dl{color:#0086d2}.highlight .sd{color:#0086d2}.highlight .s2{color:#0086d2}.highlight .se{color:#0086d2}.highlight .sh{color:#0086d2}.highlight .si{color:#0086d2}.highlight .sx{color:#0086d2}.highlight .sr{color:#0086d2}.highlight .s1{color:#0086d2}.highlight .ss{color:#0086d2}.highlight .bp{color:#ffffff}.highlight .fm{color:#ff0086;font-weight:bold}.highlight .vc{color:#fb660a}.highlight .vg{color:#fb660a}.highlight .vi{color:#fb660a}.highlight .vm{color:#fb660a}.highlight .il{color:#0086f7;font-weight:bold}pre,code{font-family:Courier,monospace}pre{overflow:auto;padding:32px;margin-bottom:16px;font-size:16px;line-height:25px;white-space:pre-wrap;word-wrap:break-word;word-break:break-all}li code,p code{padding:4px 8px}input[type='text'],input[type='tel'],input[type='number'],input[type='email'],select,textarea{width:100%;padding:16px;border:1px solid #E9EFF3;border-radius:0;outline:none;background-color:#fff;font-size:14px;appearance:none;transition:.4s}input[type='text']:hover,input[type='text']:active,input[type='text']:focus,input[type='tel']:hover,input[type='tel']:active,input[type='tel']:focus,input[type='number']:hover,input[type='number']:active,input[type='number']:focus,input[type='email']:hover,input[type='email']:active,input[type='email']:focus,select:hover,select:active,select:focus,textarea:hover,textarea:active,textarea:focus{border:1px solid #323232}.tablewrapper{overflow-x:auto;margin-left:auto;margin-right:auto}tr td,table tr th{border:1px solid #ccc;text-align:left;padding:6px 13px}table tr{border-top:1px solid #ccc;margin:0}table tr:nth-child(2n){background-color:#aaa}.o-grid{margin:0 auto;display:flex;flex-wrap:wrap;max-width:900px}.o-grid:after{content:'';display:table;clear:both}.o-grid .o-grid{margin-right:-16px;margin-left:-16px;padding:0}.o-grid--full{max-width:100vw}.o-grid__col{float:left;padding-right:16px;padding-left:16px}.o-grid__col--1-4-s{width:25%}.o-grid__col--1-3-s{width:33.3333333333%}.o-grid__col--2-4-s{width:50%}.o-grid__col--3-4-s{width:75%}.o-grid__col--4-4-s{width:100%}@media (min-width: 40em){.o-grid__col--1-4-m{width:25%}.o-grid__col--1-3-m{width:33.3333333333%}.o-grid__col--2-4-m{width:50%}.o-grid__col--3-4-m{width:75%}}@media (min-width: 64em){.o-grid__col--1-4-l{width:25%}.o-grid__col--1-3-l{width:33.3333333333%}.o-grid__col--2-4-l{width:50%}.o-grid__col--3-4-l{width:75%}}.o-grid__col--full{width:100%}.o-grid__col--center{margin:0 auto}.o-grid__col--end{margin-left:auto}.o-wrapper{padding:32px 0}.c-off-canvas-container{display:flex;min-height:100vh;flex-direction:column}.c-off-canvas-container .o-wrapper{flex:1 0 auto}.o-plain-list{margin:0;padding:0;list-style:none}.c-header__inner{padding:16px 0;border-bottom:1px solid #E9EFF3}.c-header__icon{vertical-align:middle}.c-logo__link{font-family:"Permanent Marker";font-size:36px;font-weight:300;transition:.4s}.c-logo__link:hover,.c-logo__link:active,.c-logo__link:focus{color:#84B97C;text-decoration:none}.c-nav__item{font-size:16px}.c-nav__link{display:block;transition:.4s}.c-nav__link--current{color:#84B97C}.home-template .c-nav__link--current:not(:hover){color:#323232}.c-nav__link:hover,.c-nav__link:active,.c-nav__link:focus{color:#84B97C;text-decoration:none}.c-off-canvas-toggle{float:right;position:relative;top:8px;z-index:10;height:19px;width:25px;cursor:pointer}.c-off-canvas-toggle__icon{position:absolute;left:0;height:1px;width:25px;background:#323232;cursor:pointer}.c-off-canvas-toggle__icon:before,.c-off-canvas-toggle__icon:after{content:'';display:block;height:100%;background-color:inherit;transition:.4s}.c-off-canvas-toggle__icon:before{transform:translateY(16px)}.c-off-canvas-toggle__icon:after{transform:translateY(7px)}.c-off-canvas-toggle--close .c-off-canvas-toggle__icon{height:2px;background-color:transparent}.c-off-canvas-toggle--close .c-off-canvas-toggle__icon:before,.c-off-canvas-toggle--close .c-off-canvas-toggle__icon:after{position:relative;visibility:visible;background:#323232}.c-off-canvas-toggle--close .c-off-canvas-toggle__icon:before{top:11px;transform:rotate(-45deg)}.c-off-canvas-toggle--close .c-off-canvas-toggle__icon:after{top:9px;transform:rotate(45deg)}.c-off-canvas-toggle--close{top:0;float:none;display:block;margin-left:auto}html,body{overflow-x:hidden}.c-off-canvas-content{position:fixed;top:0;right:0;width:300px;height:100%;padding:24px 32px;background-color:#fff;transform:translate3d(300px, 0, 0)}.c-off-canvas-container{transform:translate3d(0, 0, 0);transition:transform .4s cubic-bezier(0.16, 0.68, 0.43, 0.99)}.c-off-canvas-container.is-active{transform:translate3d(-300px, 0, 0)}.c-off-canvas-container.is-active:after{position:fixed;top:0;right:0;bottom:0;left:0;content:'';background-color:rgba(0,0,0,0.2)}.c-tags a{display:inline-block;padding:4px 16px;margin:0 8px 4px 0;font-size:12px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";line-height:25px;background-color:#FAFAFA;transition:.4s}.c-tags a:hover,.c-tags a:active,.c-tags a:focus{text-decoration:none;background-color:#FAFAFA}@media (max-width: 39.99em){.c-tags{margin-bottom:22px}}.c-btn{display:inline-block;padding:8px 32px;cursor:pointer;transition:.4s;text-align:center;vertical-align:middle;white-space:nowrap;line-height:inherit;border:0;border-radius:0;color:#fff;background-color:#207cdf;font-size:16px}.c-btn:hover,.c-btn:active,.c-btn:focus{text-decoration:none;background-color:#238cf6}.c-btn--full{width:100%}.c-btn--small{padding:4px 16px}.c-post-card{display:block;padding:32px 0;word-break:break-word;border-bottom:1px solid #E9EFF3}.c-post-card--first{padding-top:0}.c-post-card--last{padding-bottom:0;border-bottom:0}.c-post-card__title{margin-bottom:10px;font-size:19px;font-weight:600;transition:.4s}@media (min-width: 40em){.c-post-card__title{font-size:28px}}.c-post-card__excerpt{margin-bottom:10px}.c-post-card__date{display:block;color:#2B5F72;direction:ltr;font-size:12px;font-weight:600;line-height:22px;text-transform:uppercase}.c-post-card:hover{color:#323232;text-decoration:none}.c-post-card:hover .c-post-card__title{color:#84B97C}.c-pagination{text-transform:uppercase;transition:.4s}.c-pagination:hover,.c-pagination:active,.c-pagination:focus{color:#84B97C;text-decoration:none}.c-pagination__text{position:relative;font-size:14px;letter-spacing:2px}.c-pagination__text--prev{left:-16px}.c-pagination__text--next{right:-16px}.c-pagination__icon{vertical-align:text-top}.c-pagination__icon--prev{left:-8px}.c-pagination__icon--next{right:-8px}.c-post{margin:0 auto;max-width:900px}.c-post__title{font-size:24px;margin-bottom:16px}@media (min-width: 40em){.c-post__title{font-size:28px}}.c-post__date{position:relative;padding-top:16px;display:block;text-align:center;margin-bottom:16px;font-size:14px;font-weight:600;line-height:22px;color:#2B5F72}.c-post__date:after{position:absolute;content:'';top:0;left:50%;height:1px;width:64px;background:#FAFAFA;transform:translateX(-50%)}.c-post__image{margin:0 auto 16px}.c-content a:not(.c-btn){text-decoration:underline;text-decoration-skip:ink}.c-content a:not(.c-btn):hover,.c-content a:not(.c-btn):active,.c-content a:not(.c-btn):focus{color:#84B97C}.twitter-tweet,.fluid-width-video-wrapper{margin-bottom:16px !important}.c-social-nav__item{display:inline-block}.c-social-nav__icon{fill:#323232;vertical-align:middle;transition:.4s}.c-social-nav__icon:hover,.c-social-nav__icon:active,.c-social-nav__icon:focus{fill:#84B97C}.c-footer{padding:32px 0;background-color:#FAFAFA}@font-face{font-family:'Permanent Marker';font-style:normal;font-weight:400;src:local("Permanent Marker Regular"),local("PermanentMarker-Regular"),url(https://fonts.gstatic.com/s/permanentmarker/v9/Fh4uPib9Iyv2ucM6pGQMWimMp004La2Cfw.woff2) format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}.u-hidden{display:none}.u-hidden-visually{border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px}.u-font-medium{font-size:16px;line-height:25px}.u-font-small{font-size:14px;line-height:22px}.u-font-tiny{font-size:12px;line-height:19px}.u-text-left{text-align:left}.u-text-right{text-align:right}.u-text-center{text-align:center}.u-text-justify{text-align:justify}.u-inline{display:inline}.u-block{display:block}.u-inline-block{display:inline-block}.u-left{float:left}.u-right{float:right}.u-clearfix:after{content:'';display:table;clear:both}
+
+  </style>
+</head>
+
+<body>
+
+  <div class='js-off-canvas-container c-off-canvas-container'>
+    <header class='c-header'>
+
+  <div class='o-grid'>
+    <div class='o-grid__col o-grid__col--full'>
+      <div class='c-header__inner'>
+
+        <div class='o-grid'>
+          <div class='o-grid__col o-grid__col--3-4-s'>
+            <div class='c-logo u-text-left'>
+              <a class='c-logo__link' href='/'>katadelos</a>
+            </div>
+          </div>
+
+          <div class='o-grid__col o-grid__col--1-4-s'>
+            <label class='js-off-canvas-toggle c-off-canvas-toggle' aria-label='Toggle navigation'>
+              <span class='c-off-canvas-toggle__icon'></span>
+            </label>
+          </div>
+
+          <div class='o-grid__col o-grid__col--1-4-s'>
+            <div class='c-off-canvas-content'>
+              <label class='js-off-canvas-toggle c-off-canvas-toggle c-off-canvas-toggle--close'>
+                <span class='c-off-canvas-toggle__icon'></span>
+              </label>
+
+              <ul class='c-nav o-plain-list '>
+                
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+    
+  
+
+  
+    
+  
+
+
+
+                <li class='c-nav__item' role='presentation'>
+                  <a class='c-nav__link' href='tag/kindle'>Kindle</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</header>
+
+
+    
+
+
+  <meta itemprop='og:image' content='https://katadelos.github.io/images/kindle-micropython.jpg'>
+
+
+<div class='o-wrapper'>
+  <div class='o-grid'>
+    <div class='o-grid__col'>
+      <article class='c-post' itemscope itemtype='http://schema.org/BlogPosting'>
+
+        <h1 class='c-post__title u-text-center'>Cross-Compiling MicroPython for Kindle Paperwhite 3</h1>
+
+        <time class='c-post__date' datetime='2020-10-04T00:00:00+01:00' itemprop='datePublished'>04 Oct 2020</time>
+
+        <div class='c-content' itemprop='articleBody'>
+          
+  <img src='/images/kindle-micropython.jpg' class='c-post__image' alt='Cross-Compiling MicroPython for Kindle Paperwhite 3'>
+
+
+          <p>MicroPython is (according to their website) “a lean and efficient implementation of the Python 3 programming language that includes a small subset of the Python standard library and is optimised to run on microcontrollers and in constrained environments”.</p>
+
+<p>I’ve used it for a couple of projects on the ESP-8266 and ESP32 platforms and have always been impressed with the speed in which you can go from basic idea to working prototype. The FAT based filesystem and inclusion of a REPL mean that it is possible to iterate at a much faster pace compared to Arduino or ESP-IDF, but there are a few flaws - MicroPython is more resource intensive than other languages (get used to peppering your code with <code class="highlighter-rouge">gc.collect()</code>) and the community has a long way to go before it can match the sheer variety of hardware support and external libraries offered by the Arduino ecosystem.</p>
+
+<p>However, MicroPython is not limited to the embedded domain. A port for Unix exists and despite the lack of hardware capabilities found on ports for microcontrollers, the tiny binary size and minimal dependencies are well suited to the constrained Linux environment found on the Kindle.</p>
+
+<h2 id="setting-up-the-toolchain">Setting up the toolchain</h2>
+<p>Before we can do anything else, we need to build an ARM cross compiler toolchain. The Kindle uses an extensively patched kernel and ancient <code class="highlighter-rouge">glibc</code> release, which means that we cannot use the cross-compile toolchains found within the repositories of most Linux distributions. Amazon <em>does</em> include instructions for setting up a Poky environment to build binaries within <a href="https://www.amazon.com/gp/help/customer/display.html?nodeId=200203720">their GPL releases</a>, but as far as I know, nobody has been able to successfully build it.</p>
+
+<p>Luckily, <a href="https://github.com/NiLuJe">@NiLuJe</a> has put in a significant amount of time and effort into maintaining Kindle compatible toolchains based upon crosstool-ng. To get started, clone the <a href="https://github.com/NiLuJe/koxtoolchain">koxtoolchain</a> repository:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">git clone https://github.com/NiLuJe/koxtoolchain.git</code></pre>
+</figure>
+
+<p>We will also need to install all of the dependencies needed to compile the toolchain:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">sudo apt-get install build-essential gperf help2man bison texinfo flex gawk autoconf automake wget curl file libncurses-dev</code></pre>
+</figure>
+
+<p>We now need to establish which toolchain that we need to build. This needs to match the specific Kindle model that we want to build binaries for:</p>
+
+<div class="tablewrapper">
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: center">TC</th>
+        <th style="text-align: center">Supported Devices</th>
+        <th style="text-align: center">Target</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center">kindle</td>
+        <td style="text-align: center">Kindle 2, DX, DXg, 3</td>
+        <td style="text-align: center">kindle-legacy</td>
+      </tr>
+      <tr>
+        <td style="text-align: center">kindle5</td>
+        <td style="text-align: center">Kindle 4, Touch, PW1</td>
+        <td style="text-align: center">kindle</td>
+      </tr>
+      <tr>
+        <td style="text-align: center">kindlepw2</td>
+        <td style="text-align: center">Kindle PW2 &amp; everything since</td>
+        <td style="text-align: center">kindlepw2</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<p>In this case, we’re using a Kindle Paperwhite 3, so we need the <code class="highlighter-rouge">kindlepw2</code> toolchain. To start the compilation of the toolchain, we need to run these commands:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">cd koxtoolchain
+./gen-tc.sh kindlepw2</code></pre>
+</figure>
+
+<p>Note that this will take a while to complete - on my old-ish laptop with an Intel i5-7300U CPU, it took just under 40 minutes. When compiled, the toolchain will be located within the <code class="highlighter-rouge">~/x-tools</code> folder.</p>
+
+<h2 id="setting-up-micropython-build-enviroment">Setting up Micropython build enviroment</h2>
+<ul>
+  <li>First, clone a copy of the MicroPython source code</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">git clone https://github.com/micropython/micropython/</code></pre>
+</figure>
+
+<ul>
+  <li>We now need to build <code class="highlighter-rouge">mpy-cross</code> - this is used to pre-compile MicroPython scripts so that they can be embedded (<a href="https://learn.adafruit.com/micropython-basics-loading-modules/frozen-modules">or frozen, in MicroPython parlence</a>) into the MicroPython binary.</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">cd mpy-cross
+make</code></pre>
+</figure>
+
+<ul>
+  <li>Next, add the <code class="highlighter-rouge">/bin</code> directory containing the toolchain to your $PATH variable - I use this bash snippet within my <code class="highlighter-rouge">./bash_aliases</code> file:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-bash" data-lang="bash"><span class="c"># In ~/.bash_aliases</span>
+tc_pw2<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span>~/x-tools/arm-kindlepw2-linux-gnueabi/bin:<span class="nv">$PATH</span>
+<span class="o">}</span></code></pre>
+</figure>
+
+<ul>
+  <li>Once the prior steps are completed, enter the Unix port directory and build the dependencies required by MicroPython using the cross-compile toolchain.</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">cd ports/unix
+CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- make submodules
+CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- make deplibs</code></pre>
+</figure>
+
+<ul>
+  <li>We are ready to begin building MicroPython. I ran into a few minor issues when doing this and have included the problems and solutions as they occurred.</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- make</code></pre>
+</figure>
+
+<ul>
+  <li>As we are cross-compiling instead of building for the host platform, we immediately run into a problem:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">user@ubuntu:~/Git/micropython/ports/unix$ CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- make
+Use make V=1 or set BUILD_VERBOSE in your environment to increase build verbosity.
+mkdir -p build-standard/genhdr
+GEN build-standard/genhdr/mpversion.h
+GEN build-standard/genhdr/moduledefs.h
+GEN build-standard/genhdr/qstr.i.last
+modffi.c:32:10: fatal error: ffi.h: No such file or directory
+ #include &lt;ffi.h&gt;
+          ^~~~~~~
+compilation terminated.
+../../py/mkrules.mk:88: recipe for target 'build-standard/genhdr/qstr.i.last' failed
+make: *** [build-standard/genhdr/qstr.i.last] Error 1
+make: *** Deleting file 'build-standard/genhdr/qstr.i.last'</code></pre>
+</figure>
+
+<ul>
+  <li>The <code class="highlighter-rouge">libffi</code> headers are not included as part of the cross-compile toolchain build environment, so we need to set the <code class="highlighter-rouge">PKG_CONFIG_PATH</code> variable to point to the version included with MicroPython:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- PKG_CONFIG_PATH=~/Git/micropython/ports/unix/build-standard/lib/libffi/ make</code></pre>
+</figure>
+
+<ul>
+  <li>This time round, we run into a linker problem when running <code class="highlighter-rouge">make</code>:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">LINK micropython
+/home/user/x-tools/arm-kindlepw2-linux-gnueabi/lib/gcc/arm-kindlepw2-linux-gnueabi/7.5.0/../../../../arm-kindlepw2-linux-gnueabi/bin/ld.bfd: build-standard/unix_mphal.o: in function `mp_hal_ticks_ms':
+/home/user/Git/micropython/ports/unix/unix_mphal.c:197: undefined reference to `clock_gettime'
+/home/user/x-tools/arm-kindlepw2-linux-gnueabi/lib/gcc/arm-kindlepw2-linux-gnueabi/7.5.0/../../../../arm-kindlepw2-linux-gnueabi/bin/ld.bfd: build-standard/unix_mphal.o: in function `mp_hal_ticks_us':
+/home/user/Git/micropython/ports/unix/unix_mphal.c:209: undefined reference to `clock_gettime'
+collect2: error: ld returned 1 exit status
+../../py/mkrules.mk:168: recipe for target 'micropython' failed
+make: *** [micropython] Error 1</code></pre>
+</figure>
+
+<ul>
+  <li>In theory, the <code class="highlighter-rouge">clock_*</code> functions are available on the Kindle as part of <code class="highlighter-rouge">glibc</code> (they were moved from <code class="highlighter-rouge">librt</code> to <code class="highlighter-rouge">glibc</code> in version 2.17; the PW3 uses 2.20). However, as the cross-compiler toolchain uses 2.12 for compatibility with other Kindle models, we need to link against <code class="highlighter-rouge">librt</code>. We can do this by setting the LDFLAGS_EXTRA variable to <code class="highlighter-rouge">-lrt</code>:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- PKG_CONFIG_PATH=~/Git/micropython/ports/unix/build-standard/lib/libffi/ LDFLAGS_EXTRA="-lrt" make</code></pre>
+</figure>
+
+<ul>
+  <li>The build should now be successful:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">LINK micropython
+   text	   data	    bss	    dec	    hex	filename
+ 219128	   4568	   1248	 224944	  36eb0	micropython</code></pre>
+</figure>
+
+<ul>
+  <li>At this point, we should copy the binary over to the Kindle so that we can test it:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">scp micropython root@$KINDLE_IP:/mnt/us</code></pre>
+</figure>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">[root@kindle us]# ./micropython 
+./micropython: error while loading shared libraries: libffi.so.6: cannot open shared object file: No such file or directory</code></pre>
+</figure>
+
+<ul>
+  <li>An error is thrown due to the absense of a suitable version of libffi. There’s a few ways that we can resolve this issue:
+    <ul>
+      <li>Creating a symlink to the existing <code class="highlighter-rouge">libffi</code> version already on the Kindle. This isn’t a great idea as MicroPython might be using functionality that is only found in a recent version of the library.</li>
+      <li>Adding the MicroPython version of <code class="highlighter-rouge">libffi</code> to <code class="highlighter-rouge">/usr/lib</code> on the Kindle. This would work well, but I prefer to avoid making changes to the root filesystem of the Kindle unless I have a way to track and revert changes.</li>
+      <li>Rebuilding MicroPython with an extra shared library search path that points to a location on <code class="highlighter-rouge">/mnt/us</code>. This would also work well, but we would need to transfer our <code class="highlighter-rouge">libffi</code> build separately.</li>
+      <li>Statically linking MicroPython. This gives us a single binary that runs without the need to perform any additional tasks, at the expense of significantly increased file size.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Out of these approaches, the last 2 are preferable.</p>
+
+<hr />
+
+<h3 id="building-with-extra-shared-library-path">Building with extra shared library path</h3>
+<ul>
+  <li>Delete the existing MicroPython build:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">rm micropython</code></pre>
+</figure>
+
+<ul>
+  <li>Re-link MicroPython, with <code class="highlighter-rouge">-Wl,-rpath=/mnt/us/micropython/lib</code> appended to <code class="highlighter-rouge">LDFLAGS_EXTRA</code>:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- PKG_CONFIG_PATH=~/Git/micropython/ports/unix/build-standard/lib/libffi/ LDFLAGS_EXTRA="-lrt -Wl,-rpath=/mnt/us/micropython/lib" make</code></pre>
+</figure>
+
+<ul>
+  <li>Create a directory to contain <code class="highlighter-rouge">libffi</code> on the Kindle:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">mkdir -p /mnt/us/micropython/lib</code></pre>
+</figure>
+
+<ul>
+  <li>Copy the cross-compiled libraries to the Kindle:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">scp build-standard/lib/libffi/out/lib/libffi.so* root@$KINDLE_IP:/mnt/us/micropython/lib</code></pre>
+</figure>
+
+<ul>
+  <li>Copy the MicroPython binary to the Kindle</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">scp micropython root@$KINDLE_IP:/mnt/us/micropython/</code></pre>
+</figure>
+
+<ul>
+  <li>We should verify that the Kindle is able to load the shared library from the additional search path -  the output from <code class="highlighter-rouge">ldd</code> should look similar to this:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">[root@kindle micropython]# ldd micropython 
+	/usr/lib/libenvload.so (0x40128000)
+	libpthread.so.0 =&gt; /lib/libpthread.so.0 (0x400c3000)
+	libffi.so.6 =&gt; /mnt/us/micropython/lib/libffi.so.6 (0x4004e000)
+	libdl.so.2 =&gt; /lib/libdl.so.2 (0x400e7000)
+	libm.so.6 =&gt; /lib/libm.so.6 (0x40131000)
+	librt.so.1 =&gt; /lib/librt.so.1 (0x4008e000)
+	libc.so.6 =&gt; /lib/libc.so.6 (0x401a5000)
+	libgcc_s.so.1 =&gt; /lib/libgcc_s.so.1 (0x400f2000)
+	/lib/ld-linux.so.3 (0x40065000)</code></pre>
+</figure>
+
+<ul>
+  <li>If <code class="highlighter-rouge">libffi</code> is found, MicroPython will run successfully:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">[root@kindle micropython]# ./micropython 
+MicroPython v1.13-95-g0fff2e03f on 2020-10-04; linux version
+Use Ctrl-D to exit, Ctrl-E for paste mode
+&gt;&gt;&gt; print("Hello, world")
+Hello, world</code></pre>
+</figure>
+
+<hr />
+<h3 id="building-with-statically-linked-libraries">Building with statically linked libraries</h3>
+<ul>
+  <li>Delete the existing MicroPython build:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">rm micropython</code></pre>
+</figure>
+
+<ul>
+  <li>Re-link MicroPython with <code class="highlighter-rouge">LDFLAGS_EXTRA</code> set to <code class="highlighter-rouge">-static -lrt -lffi</code></li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- PKG_CONFIG_PATH=~/Git/micropython/ports/unix/build-standard/lib/libffi/ LDFLAGS_EXTRA="-static -lrt -lffi" make</code></pre>
+</figure>
+
+<ul>
+  <li>This will emit a few warnings, but they can be safely ignored:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">LINK micropython
+/home/user/x-tools/arm-kindlepw2-linux-gnueabi/lib/gcc/arm-kindlepw2-linux-gnueabi/7.5.0/../../../../arm-kindlepw2-linux-gnueabi/bin/ld.bfd: build-standard/modffi.o: in function `ffimod_make_new':
+/home/user/Git/micropython/ports/unix/modffi.c:329: warning: Using 'dlopen' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking
+/home/user/x-tools/arm-kindlepw2-linux-gnueabi/lib/gcc/arm-kindlepw2-linux-gnueabi/7.5.0/../../../../arm-kindlepw2-linux-gnueabi/bin/ld.bfd: build-standard/modusocket.o: in function `mod_socket_getaddrinfo':
+/home/user/Git/micropython/ports/unix/modusocket.c:574: warning: Using 'getaddrinfo' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking</code></pre>
+</figure>
+
+<ul>
+  <li>Copy the MicroPython binary to the Kindle:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">scp micropython root@192.168.1.111:/mnt/us</code></pre>
+</figure>
+
+<ul>
+  <li>MicroPython should run successfully:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">[root@kindle us]# ./micropython 
+MicroPython v1.13-95-g0fff2e03f on 2020-10-04; linux version
+Use Ctrl-D to exit, Ctrl-E for paste mode
+&gt;&gt;&gt; print("Hello, world")
+Hello, world</code></pre>
+</figure>
+
+<ul>
+  <li>Statically linking the binary has increased the size by around 700KB, but this isn’t a major problem as the total size is still under 1MB:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">[root@kindle us]# ls -lh micropython*
+-rwxrwxrwx    1 root     root      914.9K Oct  4 19:28 micropython
+-rwxrwxrwx    1 root     root      221.4K Oct  4 19:35 micropython-dynamic</code></pre>
+</figure>
+
+<hr />
+
+<h2 id="installing-additional-libraries-with-upip">Installing additional libraries with upip</h2>
+<p>MicroPython includes a package manager that is vaguely similar to <code class="highlighter-rouge">pip</code>. The package selection is limited (with many being stub packages that offer no functionality) and packages need to be created specifically for MicroPython; you cannot use packages for other implementations like CPython without adapting them beforehand. These libraries are available on micropython.org and PyPI - the full listing <a href="https://pypi.org/search/?q=&amp;o=&amp;c=Programming+Language+%3A%3A+Python+%3A%3A+Implementation+%3A%3A+MicroPython">can be found here</a>.</p>
+
+<p>By default, packages are installed in the home directory of the current user. This presents a problem in the case of the Kindle - the default home directory is <code class="highlighter-rouge">/tmp/root</code>, which means that any installed packages will be deleted when the device is rebooted. According to the documentation, it is possible to specify an installation path for <code class="highlighter-rouge">upip</code> using the <code class="highlighter-rouge">-p</code> flag:</p>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">./micropython -m upip install -p /mnt/us/.micropython/lib urequests</code></pre>
+</figure>
+
+<p>However, it’s easier to change the install path so that we don’t need to specify it each time we want to install a package.</p>
+
+<ul>
+  <li>To do this, open <code class="highlighter-rouge">micropython/tools/upip.py</code> on your host system. The function that we need to alter is <code class="highlighter-rouge">get_install_path</code>:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">get_install_path</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">install_path</span>
+    <span class="k">if</span> <span class="n">install_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="c1"># sys.path[0] is current module's path
+</span>        <span class="n">install_path</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">install_path</span> <span class="o">=</span> <span class="n">expandhome</span><span class="p">(</span><span class="n">install_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">install_path</span></code></pre>
+</figure>
+
+<ul>
+  <li>Change <code class="highlighter-rouge">install_path</code> from <code class="highlighter-rouge">sys.path[1]</code> to <code class="highlighter-rouge">/mnt/us/.micropython/lib</code>:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">get_install_path</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">install_path</span>
+    <span class="k">if</span> <span class="n">install_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">install_path</span> <span class="o">=</span> <span class="s">"/mnt/us/.micropython/lib"</span>
+    <span class="n">install_path</span> <span class="o">=</span> <span class="n">expandhome</span><span class="p">(</span><span class="n">install_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">install_path</span></code></pre>
+</figure>
+
+<ul>
+  <li>Once you have made this change, rebuild MicroPython using one of the processes above, then transfer the binary to the Kindle. When a package is installed, the installation directory will be shown:</li>
+</ul>
+
+<figure class="highlight">
+  <pre><code class="language-none" data-lang="none">[root@kindle us]# ./micropython -m upip install urequests
+Installing to: /mnt/us/.micropython/lib/
+Warning: micropython.org SSL certificate is not validated
+Installing urequests 0.6 from https://micropython.org/pi/urequests/urequests-0.6.tar.gz</code></pre>
+</figure>
+
+<hr />
+<p>You should now have a working version of MicroPython on your Kindle and hopefully, a clearer idea of how basic cross compilation works. Although the utility of MicroPython is limited by the lack of deeper hardware access found on microcontroller ports, the ability to access a lightweight scripting language with support for extra packages can be incredibly useful, especially once you understand the concept of freezing modules into a build.</p>
+
+<p>If you found this post interesting, it’s definitely worth checking out the <a href="https://www.mobileread.com/forums/forumdisplay.php?f=150">MobileRead Kindle Developers forum</a> to see what else you can do with your Kindle, and the <a href="https://forum.micropython.org/">MicroPython forums</a> to get a sense of other things you can can achieve with this minimal language.</p>
+
+
+        </div>
+
+        <div class='c-tags'>
+          
+            <a href='/tag/kindle'>kindle</a>
+          
+            <a href='/tag/micropython'>micropython</a>
+          
+            <a href='/tag/cross-compiling'>cross-compiling</a>
+          
+        </div>
+
+        <hr>
+
+
+      </article>
+    </div>
+  </div>
+</div>
+
+
+    <footer class='c-footer'>
+  <div class='o-grid'>
+    <div class='o-grid__col o-grid__col--full'>
+
+      <ul class='o-plain-list c-social-nav u-text-center'>
+        <li class='c-social-nav__item'>
+          <a href='https://github.com/katadelos' target='_blank'>
+            <span class='c-social-nav__icon' data-icon='ei-sc-github' data-size='s'></span>
+          </a>
+        </li>
+        <li class='c-social-nav__item'>
+          <a href='mailto:katadelos@protonmail.com' target='_blank'>
+            <span class='c-social-nav__icon' data-icon='ei-envelope' data-size='s'></span>
+          </a>
+        </li>
+      </ul>
+
+    </div>
+  </div>
+</footer>
+
+  </div>
+
+  <script src="/js/jquery-3.1.1.min.js"> </script>
+  <script src="/js/evil-icons.min.js">   </script>
+  <script src="/js/jquery.fitvids.js">   </script>
+  <script src="/js/app.js">              </script>
+</body>
+
+</html>

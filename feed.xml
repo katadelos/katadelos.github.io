@@ -5,10 +5,402 @@
     <description></description>
     <link>https://katadelos.github.io/</link>
     <atom:link href="https://katadelos.github.io/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Wed, 30 Sep 2020 21:20:25 +0100</pubDate>
-    <lastBuildDate>Wed, 30 Sep 2020 21:20:25 +0100</lastBuildDate>
+    <pubDate>Mon, 05 Oct 2020 20:52:21 +0100</pubDate>
+    <lastBuildDate>Mon, 05 Oct 2020 20:52:21 +0100</lastBuildDate>
     <generator>Jekyll v4.0.0</generator>
 
+    
+      <item>
+        <title>Cross-Compiling MicroPython for Kindle Paperwhite 3</title>
+        <description>&lt;p&gt;MicroPython is (according to their website) “a lean and efficient implementation of the Python 3 programming language that includes a small subset of the Python standard library and is optimised to run on microcontrollers and in constrained environments”.&lt;/p&gt;
+
+&lt;p&gt;I’ve used it for a couple of projects on the ESP-8266 and ESP32 platforms and have always been impressed with the speed in which you can go from basic idea to working prototype. The FAT based filesystem and inclusion of a REPL mean that it is possible to iterate at a much faster pace compared to Arduino or ESP-IDF, but there are a few flaws - MicroPython is more resource intensive than other languages (get used to peppering your code with &lt;code class=&quot;highlighter-rouge&quot;&gt;gc.collect()&lt;/code&gt;) and the community has a long way to go before it can match the sheer variety of hardware support and external libraries offered by the Arduino ecosystem.&lt;/p&gt;
+
+&lt;p&gt;However, MicroPython is not limited to the embedded domain. A port for Unix exists and despite the lack of hardware capabilities found on ports for microcontrollers, the tiny binary size and minimal dependencies are well suited to the constrained Linux environment found on the Kindle.&lt;/p&gt;
+
+&lt;h2 id=&quot;setting-up-the-toolchain&quot;&gt;Setting up the toolchain&lt;/h2&gt;
+&lt;p&gt;Before we can do anything else, we need to build an ARM cross compiler toolchain. The Kindle uses an extensively patched kernel and ancient &lt;code class=&quot;highlighter-rouge&quot;&gt;glibc&lt;/code&gt; release, which means that we cannot use the cross-compile toolchains found within the repositories of most Linux distributions. Amazon &lt;em&gt;does&lt;/em&gt; include instructions for setting up a Poky environment to build binaries within &lt;a href=&quot;https://www.amazon.com/gp/help/customer/display.html?nodeId=200203720&quot;&gt;their GPL releases&lt;/a&gt;, but as far as I know, nobody has been able to successfully build it.&lt;/p&gt;
+
+&lt;p&gt;Luckily, &lt;a href=&quot;https://github.com/NiLuJe&quot;&gt;@NiLuJe&lt;/a&gt; has put in a significant amount of time and effort into maintaining Kindle compatible toolchains based upon crosstool-ng. To get started, clone the &lt;a href=&quot;https://github.com/NiLuJe/koxtoolchain&quot;&gt;koxtoolchain&lt;/a&gt; repository:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;git clone https://github.com/NiLuJe/koxtoolchain.git&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;We will also need to install all of the dependencies needed to compile the toolchain:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;sudo apt-get install build-essential gperf help2man bison texinfo flex gawk autoconf automake wget curl file libncurses-dev&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;We now need to establish which toolchain that we need to build. This needs to match the specific Kindle model that we want to build binaries for:&lt;/p&gt;
+
+&lt;div class=&quot;tablewrapper&quot;&gt;
+  &lt;table&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th style=&quot;text-align: center&quot;&gt;TC&lt;/th&gt;
+        &lt;th style=&quot;text-align: center&quot;&gt;Supported Devices&lt;/th&gt;
+        &lt;th style=&quot;text-align: center&quot;&gt;Target&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;text-align: center&quot;&gt;kindle&lt;/td&gt;
+        &lt;td style=&quot;text-align: center&quot;&gt;Kindle 2, DX, DXg, 3&lt;/td&gt;
+        &lt;td style=&quot;text-align: center&quot;&gt;kindle-legacy&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;text-align: center&quot;&gt;kindle5&lt;/td&gt;
+        &lt;td style=&quot;text-align: center&quot;&gt;Kindle 4, Touch, PW1&lt;/td&gt;
+        &lt;td style=&quot;text-align: center&quot;&gt;kindle&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;text-align: center&quot;&gt;kindlepw2&lt;/td&gt;
+        &lt;td style=&quot;text-align: center&quot;&gt;Kindle PW2 &amp;amp; everything since&lt;/td&gt;
+        &lt;td style=&quot;text-align: center&quot;&gt;kindlepw2&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+
+&lt;/div&gt;
+
+&lt;p&gt;In this case, we’re using a Kindle Paperwhite 3, so we need the &lt;code class=&quot;highlighter-rouge&quot;&gt;kindlepw2&lt;/code&gt; toolchain. To start the compilation of the toolchain, we need to run these commands:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;cd koxtoolchain
+./gen-tc.sh kindlepw2&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;Note that this will take a while to complete - on my old-ish laptop with an Intel i5-7300U CPU, it took just under 40 minutes. When compiled, the toolchain will be located within the &lt;code class=&quot;highlighter-rouge&quot;&gt;~/x-tools&lt;/code&gt; folder.&lt;/p&gt;
+
+&lt;h2 id=&quot;setting-up-micropython-build-enviroment&quot;&gt;Setting up Micropython build enviroment&lt;/h2&gt;
+&lt;ul&gt;
+  &lt;li&gt;First, clone a copy of the MicroPython source code&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;git clone https://github.com/micropython/micropython/&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;We now need to build &lt;code class=&quot;highlighter-rouge&quot;&gt;mpy-cross&lt;/code&gt; - this is used to pre-compile MicroPython scripts so that they can be embedded (&lt;a href=&quot;https://learn.adafruit.com/micropython-basics-loading-modules/frozen-modules&quot;&gt;or frozen, in MicroPython parlence&lt;/a&gt;) into the MicroPython binary.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;cd mpy-cross
+make&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Next, add the &lt;code class=&quot;highlighter-rouge&quot;&gt;/bin&lt;/code&gt; directory containing the toolchain to your $PATH variable - I use this bash snippet within my &lt;code class=&quot;highlighter-rouge&quot;&gt;./bash_aliases&lt;/code&gt; file:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;# In ~/.bash_aliases&lt;/span&gt;
+tc_pw2&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;export &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;~/x-tools/arm-kindlepw2-linux-gnueabi/bin:&lt;span class=&quot;nv&quot;&gt;$PATH&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Once the prior steps are completed, enter the Unix port directory and build the dependencies required by MicroPython using the cross-compile toolchain.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;cd ports/unix
+CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- make submodules
+CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- make deplibs&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;We are ready to begin building MicroPython. I ran into a few minor issues when doing this and have included the problems and solutions as they occurred.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- make&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;As we are cross-compiling instead of building for the host platform, we immediately run into a problem:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;user@ubuntu:~/Git/micropython/ports/unix$ CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- make
+Use make V=1 or set BUILD_VERBOSE in your environment to increase build verbosity.
+mkdir -p build-standard/genhdr
+GEN build-standard/genhdr/mpversion.h
+GEN build-standard/genhdr/moduledefs.h
+GEN build-standard/genhdr/qstr.i.last
+modffi.c:32:10: fatal error: ffi.h: No such file or directory
+ #include &amp;lt;ffi.h&amp;gt;
+          ^~~~~~~
+compilation terminated.
+../../py/mkrules.mk:88: recipe for target 'build-standard/genhdr/qstr.i.last' failed
+make: *** [build-standard/genhdr/qstr.i.last] Error 1
+make: *** Deleting file 'build-standard/genhdr/qstr.i.last'&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The &lt;code class=&quot;highlighter-rouge&quot;&gt;libffi&lt;/code&gt; headers are not included as part of the cross-compile toolchain build environment, so we need to set the &lt;code class=&quot;highlighter-rouge&quot;&gt;PKG_CONFIG_PATH&lt;/code&gt; variable to point to the version included with MicroPython:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- PKG_CONFIG_PATH=~/Git/micropython/ports/unix/build-standard/lib/libffi/ make&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;This time round, we run into a linker problem when running &lt;code class=&quot;highlighter-rouge&quot;&gt;make&lt;/code&gt;:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;LINK micropython
+/home/user/x-tools/arm-kindlepw2-linux-gnueabi/lib/gcc/arm-kindlepw2-linux-gnueabi/7.5.0/../../../../arm-kindlepw2-linux-gnueabi/bin/ld.bfd: build-standard/unix_mphal.o: in function `mp_hal_ticks_ms':
+/home/user/Git/micropython/ports/unix/unix_mphal.c:197: undefined reference to `clock_gettime'
+/home/user/x-tools/arm-kindlepw2-linux-gnueabi/lib/gcc/arm-kindlepw2-linux-gnueabi/7.5.0/../../../../arm-kindlepw2-linux-gnueabi/bin/ld.bfd: build-standard/unix_mphal.o: in function `mp_hal_ticks_us':
+/home/user/Git/micropython/ports/unix/unix_mphal.c:209: undefined reference to `clock_gettime'
+collect2: error: ld returned 1 exit status
+../../py/mkrules.mk:168: recipe for target 'micropython' failed
+make: *** [micropython] Error 1&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;In theory, the &lt;code class=&quot;highlighter-rouge&quot;&gt;clock_*&lt;/code&gt; functions are available on the Kindle as part of &lt;code class=&quot;highlighter-rouge&quot;&gt;glibc&lt;/code&gt; (they were moved from &lt;code class=&quot;highlighter-rouge&quot;&gt;librt&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;glibc&lt;/code&gt; in version 2.17; the PW3 uses 2.20). However, as the cross-compiler toolchain uses 2.12 for compatibility with other Kindle models, we need to link against &lt;code class=&quot;highlighter-rouge&quot;&gt;librt&lt;/code&gt;. We can do this by setting the LDFLAGS_EXTRA variable to &lt;code class=&quot;highlighter-rouge&quot;&gt;-lrt&lt;/code&gt;:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- PKG_CONFIG_PATH=~/Git/micropython/ports/unix/build-standard/lib/libffi/ LDFLAGS_EXTRA=&quot;-lrt&quot; make&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The build should now be successful:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;LINK micropython
+   text	   data	    bss	    dec	    hex	filename
+ 219128	   4568	   1248	 224944	  36eb0	micropython&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;At this point, we should copy the binary over to the Kindle so that we can test it:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;scp micropython root@$KINDLE_IP:/mnt/us&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;[root@kindle us]# ./micropython 
+./micropython: error while loading shared libraries: libffi.so.6: cannot open shared object file: No such file or directory&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;An error is thrown due to the absense of a suitable version of libffi. There’s a few ways that we can resolve this issue:
+    &lt;ul&gt;
+      &lt;li&gt;Creating a symlink to the existing &lt;code class=&quot;highlighter-rouge&quot;&gt;libffi&lt;/code&gt; version already on the Kindle. This isn’t a great idea as MicroPython might be using functionality that is only found in a recent version of the library.&lt;/li&gt;
+      &lt;li&gt;Adding the MicroPython version of &lt;code class=&quot;highlighter-rouge&quot;&gt;libffi&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;/usr/lib&lt;/code&gt; on the Kindle. This would work well, but I prefer to avoid making changes to the root filesystem of the Kindle unless I have a way to track and revert changes.&lt;/li&gt;
+      &lt;li&gt;Rebuilding MicroPython with an extra shared library search path that points to a location on &lt;code class=&quot;highlighter-rouge&quot;&gt;/mnt/us&lt;/code&gt;. This would also work well, but we would need to transfer our &lt;code class=&quot;highlighter-rouge&quot;&gt;libffi&lt;/code&gt; build separately.&lt;/li&gt;
+      &lt;li&gt;Statically linking MicroPython. This gives us a single binary that runs without the need to perform any additional tasks, at the expense of significantly increased file size.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Out of these approaches, the last 2 are preferable.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;building-with-extra-shared-library-path&quot;&gt;Building with extra shared library path&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;Delete the existing MicroPython build:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;rm micropython&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Re-link MicroPython, with &lt;code class=&quot;highlighter-rouge&quot;&gt;-Wl,-rpath=/mnt/us/micropython/lib&lt;/code&gt; appended to &lt;code class=&quot;highlighter-rouge&quot;&gt;LDFLAGS_EXTRA&lt;/code&gt;:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- PKG_CONFIG_PATH=~/Git/micropython/ports/unix/build-standard/lib/libffi/ LDFLAGS_EXTRA=&quot;-lrt -Wl,-rpath=/mnt/us/micropython/lib&quot; make&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Create a directory to contain &lt;code class=&quot;highlighter-rouge&quot;&gt;libffi&lt;/code&gt; on the Kindle:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;mkdir -p /mnt/us/micropython/lib&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Copy the cross-compiled libraries to the Kindle:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;scp build-standard/lib/libffi/out/lib/libffi.so* root@$KINDLE_IP:/mnt/us/micropython/lib&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Copy the MicroPython binary to the Kindle&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;scp micropython root@$KINDLE_IP:/mnt/us/micropython/&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;We should verify that the Kindle is able to load the shared library from the additional search path -  the output from &lt;code class=&quot;highlighter-rouge&quot;&gt;ldd&lt;/code&gt; should look similar to this:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;[root@kindle micropython]# ldd micropython 
+	/usr/lib/libenvload.so (0x40128000)
+	libpthread.so.0 =&amp;gt; /lib/libpthread.so.0 (0x400c3000)
+	libffi.so.6 =&amp;gt; /mnt/us/micropython/lib/libffi.so.6 (0x4004e000)
+	libdl.so.2 =&amp;gt; /lib/libdl.so.2 (0x400e7000)
+	libm.so.6 =&amp;gt; /lib/libm.so.6 (0x40131000)
+	librt.so.1 =&amp;gt; /lib/librt.so.1 (0x4008e000)
+	libc.so.6 =&amp;gt; /lib/libc.so.6 (0x401a5000)
+	libgcc_s.so.1 =&amp;gt; /lib/libgcc_s.so.1 (0x400f2000)
+	/lib/ld-linux.so.3 (0x40065000)&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;If &lt;code class=&quot;highlighter-rouge&quot;&gt;libffi&lt;/code&gt; is found, MicroPython will run successfully:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;[root@kindle micropython]# ./micropython 
+MicroPython v1.13-95-g0fff2e03f on 2020-10-04; linux version
+Use Ctrl-D to exit, Ctrl-E for paste mode
+&amp;gt;&amp;gt;&amp;gt; print(&quot;Hello, world&quot;)
+Hello, world&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+&lt;h3 id=&quot;building-with-statically-linked-libraries&quot;&gt;Building with statically linked libraries&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;Delete the existing MicroPython build:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;rm micropython&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Re-link MicroPython with &lt;code class=&quot;highlighter-rouge&quot;&gt;LDFLAGS_EXTRA&lt;/code&gt; set to &lt;code class=&quot;highlighter-rouge&quot;&gt;-static -lrt -lffi&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;CROSS_COMPILE=arm-kindlepw2-linux-gnueabi- PKG_CONFIG_PATH=~/Git/micropython/ports/unix/build-standard/lib/libffi/ LDFLAGS_EXTRA=&quot;-static -lrt -lffi&quot; make&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;This will emit a few warnings, but they can be safely ignored:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;LINK micropython
+/home/user/x-tools/arm-kindlepw2-linux-gnueabi/lib/gcc/arm-kindlepw2-linux-gnueabi/7.5.0/../../../../arm-kindlepw2-linux-gnueabi/bin/ld.bfd: build-standard/modffi.o: in function `ffimod_make_new':
+/home/user/Git/micropython/ports/unix/modffi.c:329: warning: Using 'dlopen' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking
+/home/user/x-tools/arm-kindlepw2-linux-gnueabi/lib/gcc/arm-kindlepw2-linux-gnueabi/7.5.0/../../../../arm-kindlepw2-linux-gnueabi/bin/ld.bfd: build-standard/modusocket.o: in function `mod_socket_getaddrinfo':
+/home/user/Git/micropython/ports/unix/modusocket.c:574: warning: Using 'getaddrinfo' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Copy the MicroPython binary to the Kindle:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;scp micropython root@192.168.1.111:/mnt/us&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;MicroPython should run successfully:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;[root@kindle us]# ./micropython 
+MicroPython v1.13-95-g0fff2e03f on 2020-10-04; linux version
+Use Ctrl-D to exit, Ctrl-E for paste mode
+&amp;gt;&amp;gt;&amp;gt; print(&quot;Hello, world&quot;)
+Hello, world&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Statically linking the binary has increased the size by around 700KB, but this isn’t a major problem as the total size is still under 1MB:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;[root@kindle us]# ls -lh micropython*
+-rwxrwxrwx    1 root     root      914.9K Oct  4 19:28 micropython
+-rwxrwxrwx    1 root     root      221.4K Oct  4 19:35 micropython-dynamic&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;installing-additional-libraries-with-upip&quot;&gt;Installing additional libraries with upip&lt;/h2&gt;
+&lt;p&gt;MicroPython includes a package manager that is vaguely similar to &lt;code class=&quot;highlighter-rouge&quot;&gt;pip&lt;/code&gt;. The package selection is limited (with many being stub packages that offer no functionality) and packages need to be created specifically for MicroPython; you cannot use packages for other implementations like CPython without adapting them beforehand. These libraries are available on micropython.org and PyPI - the full listing &lt;a href=&quot;https://pypi.org/search/?q=&amp;amp;o=&amp;amp;c=Programming+Language+%3A%3A+Python+%3A%3A+Implementation+%3A%3A+MicroPython&quot;&gt;can be found here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;By default, packages are installed in the home directory of the current user. This presents a problem in the case of the Kindle - the default home directory is &lt;code class=&quot;highlighter-rouge&quot;&gt;/tmp/root&lt;/code&gt;, which means that any installed packages will be deleted when the device is rebooted. According to the documentation, it is possible to specify an installation path for &lt;code class=&quot;highlighter-rouge&quot;&gt;upip&lt;/code&gt; using the &lt;code class=&quot;highlighter-rouge&quot;&gt;-p&lt;/code&gt; flag:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;./micropython -m upip install -p /mnt/us/.micropython/lib urequests&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;However, it’s easier to change the install path so that we don’t need to specify it each time we want to install a package.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;To do this, open &lt;code class=&quot;highlighter-rouge&quot;&gt;micropython/tools/upip.py&lt;/code&gt; on your host system. The function that we need to alter is &lt;code class=&quot;highlighter-rouge&quot;&gt;get_install_path&lt;/code&gt;:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;get_install_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;global&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;# sys.path[0] is current module's path
+&lt;/span&gt;        &lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;expandhome&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Change &lt;code class=&quot;highlighter-rouge&quot;&gt;install_path&lt;/code&gt; from &lt;code class=&quot;highlighter-rouge&quot;&gt;sys.path[1]&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;/mnt/us/.micropython/lib&lt;/code&gt;:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;get_install_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;global&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;/mnt/us/.micropython/lib&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;expandhome&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;install_path&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Once you have made this change, rebuild MicroPython using one of the processes above, then transfer the binary to the Kindle. When a package is installed, the installation directory will be shown:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;
+  &lt;pre&gt;&lt;code class=&quot;language-none&quot; data-lang=&quot;none&quot;&gt;[root@kindle us]# ./micropython -m upip install urequests
+Installing to: /mnt/us/.micropython/lib/
+Warning: micropython.org SSL certificate is not validated
+Installing urequests 0.6 from https://micropython.org/pi/urequests/urequests-0.6.tar.gz&lt;/code&gt;&lt;/pre&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+&lt;p&gt;You should now have a working version of MicroPython on your Kindle and hopefully, a clearer idea of how basic cross compilation works. Although the utility of MicroPython is limited by the lack of deeper hardware access found on microcontroller ports, the ability to access a lightweight scripting language with support for extra packages can be incredibly useful, especially once you understand the concept of freezing modules into a build.&lt;/p&gt;
+
+&lt;p&gt;If you found this post interesting, it’s definitely worth checking out the &lt;a href=&quot;https://www.mobileread.com/forums/forumdisplay.php?f=150&quot;&gt;MobileRead Kindle Developers forum&lt;/a&gt; to see what else you can do with your Kindle, and the &lt;a href=&quot;https://forum.micropython.org/&quot;&gt;MicroPython forums&lt;/a&gt; to get a sense of other things you can can achieve with this minimal language.&lt;/p&gt;
+
+</description>
+        <pubDate>Sun, 04 Oct 2020 00:00:00 +0100</pubDate>
+        <link>https://katadelos.github.io/2020/10/04/cross-compiling-micropython-kindle/</link>
+        <guid isPermaLink="true">https://katadelos.github.io/2020/10/04/cross-compiling-micropython-kindle/</guid>
+      </item>
     
       <item>
         <title>Installing OpenWrt 19.07.3 on BT Homehub 5A</title>
@@ -540,6 +932,10 @@ i2c-adapter i2c-0: new_device: Instantiated device mma8453 at 0x1c&lt;/code&gt;&
     
       
         
+      
+    
+      
+    
       
     
       
