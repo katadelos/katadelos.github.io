@@ -6,9 +6,9 @@
   <meta http-equiv='X-UA-Compatible' content='IE=edge'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
 
-  <title>katadelos</title>
-  <meta name='description' content="">
-  <link rel='canonical' href="https://katadelos.github.io/tag/linux/">
+  <title>Taking high-quality screenshots using Xterm</title>
+  <meta name='description' content="Something that I commonly need when writing documentation is high quality screenshots of terminal windows. It’s possible to create these using the standard t...">
+  <link rel='canonical' href="https://katadelos.github.io/2020/12/02/high-quality-terminal-screenshots-xterm/">
   <link rel='alternate' type='application/rss+xml' title='katadelos' href="https://katadelos.github.io/feed.xml">
 
   <style>
@@ -108,78 +108,91 @@
 </header>
 
 
-    <div class='o-wrapper'>
+    
 
+
+  <meta itemprop='og:image' content='https://katadelos.github.io/images/xterm-screenshot/build-options-ccache.png'>
+
+
+<div class='o-wrapper'>
   <div class='o-grid'>
     <div class='o-grid__col'>
-      <h4>linux</h4>
+      <article class='c-post' itemscope itemtype='http://schema.org/BlogPosting'>
+
+        <h1 class='c-post__title u-text-center'>Taking high-quality screenshots using Xterm</h1>
+
+        <time class='c-post__date' datetime='2020-12-02T00:00:00+00:00' itemprop='datePublished'>02 Dec 2020</time>
+
+        <div class='c-content' itemprop='articleBody'>
+          
+  <img src='/images/xterm-screenshot/build-options-ccache.png' class='c-post__image' alt='Taking high-quality screenshots using Xterm'>
+
+
+          <p>Something that I commonly need when writing documentation is high quality screenshots of terminal windows. It’s possible to create these using the standard tools provided with your distribution (for example, you can press Alt + Prt Scr and select the terminal window on Ubuntu), but this usually requires tweaking the font and window size to get an high-quality image that can be optimised down to web quality later.</p>
+
+<p>There’s a couple of ways around this, but my preferred method is to use the screen dump functionality built into Xterm. Xterm is capable of saving the contents of the terminal to an SVG file, which gives us much more control over the final output without the need to use the less reliable method above.</p>
+
+<p>Xterm looks a bit dated using the default font, so the first thing that we’ll do is configure it to use a font of our choice (in this case, Ubuntu Mono). It won’t have an impact on the SVG output - this is just to make Xterm a bit nicer to use whilst we’re taking screenshots.</p>
+
+<p>We’ll also set the default geometry of the window. This will let us create consistently sized screenshots without needing to manually adjust the size of the Xterm window.</p>
+
+<ul>
+  <li>To do this, create a file in your home directory called <code class="highlighter-rouge">.Xresources</code> and add the following options within it:
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>! default options
+  XTerm*faceName: Ubuntu Mono
+  XTerm*faceSize: 14
+  XTerm.VT100.geometry: 110x32 
+</code></pre></div>    </div>
+  </li>
+  <li>These changes will not be picked up by default, so you will need to either restart your X server or merge the resource file you just created with the current settings in use:
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>xrdb -merge ~/.Xresources
+</code></pre></div>    </div>
+  </li>
+  <li>Taking a screenshot is simple - press Ctrl + left click and select <code class="highlighter-rouge">SVG screen dump</code> from the menu that appears:
+<img src="/images/xterm-screenshot/xterm1.jpg" alt="neofetch" /></li>
+  <li>The screenshot will have a filename with this format:
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>xterm.YYYY.MM.DD.hh.mm.ss.svg
+</code></pre></div>    </div>
+  </li>
+  <li>The SVG will be rendered slightly differently between operating systems due to the way that the font is specified within the file (<code class="highlighter-rouge">font-family='monospace'</code>). Heavy use of color and line drawing characters will also show “artifacts” like these:
+<img src="/images/xterm-screenshot/build-options-ccache.svg" alt="ccache-svg" /></li>
+  <li>I attempted to avoid this by by using ImageMagick to convert the SVG to a PNG but obtained poor results:
+<img src="/images/xterm-screenshot/xterm3.png" alt="ccache-bad-png" /></li>
+  <li>Luckily, the output from <code class="highlighter-rouge">rsvg-convert</code> looked a lot better:
+<img src="/images/xterm-screenshot/build-options-ccache.png" alt="ccache-bad-png" /></li>
+  <li><code class="highlighter-rouge">rsvg-convert</code> can be installed from the default Ubuntu repositories and used like so:
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt install librsvg2-bin
+rsvg-convert $INPUT_FILE.svg &gt; $OUTPUT_FILE.png
+</code></pre></div>    </div>
+  </li>
+  <li>By default, <code class="highlighter-rouge">rsvg-convert</code> will use the geometry of the SVG file. This can lead to images that are slightly pixellated after conversion to PNG. To avoid this, set the zoom factor with the <code class="highlighter-rouge">-z</code> flag to scale up the output image:
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rsvg-convert -z 1.5 $INPUT_FILE.svg &gt; $OUTPUT_FILE.png
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<p>Overall, Xterm’s screen dump feature makes a good alternative to the usual methods of creating terminal screenshots; I’m surprised that this functionality isn’t found within more terminal emulators. Although needing to convert the SVG to a different format can be annoying, the level of detail and control offered by starting from a vector based format makes up for that.</p>
+
+        </div>
+
+        <div class='c-tags'>
+          
+            <a href='/tag/linux'>linux</a>
+          
+            <a href='/tag/xterm'>xterm</a>
+          
+            <a href='/tag/svg'>svg</a>
+          
+        </div>
+
+        <hr>
+
+
+      </article>
     </div>
   </div>
-
-  <div class='o-grid'>
-    
-      <div class='o-grid__col'>
-
-  <a href='/2020/12/02/high-quality-terminal-screenshots-xterm/' class='c-post-card  c-post-card--first  '>
-    <h3 class='c-post-card__title'>Taking high-quality screenshots using Xterm</h3>
-
-    
-      <img src='/images/xterm-screenshot/build-options-ccache.png' class='c-post__image' alt='Taking high-quality screenshots using Xterm'>
-    
-
-    <p class='c-post-card__excerpt u-font-medium'>
-      Something that I commonly need when writing documentation is high quality screenshots of terminal windows. It’s possible to create these using the standard tools provided with your distribution (for example, you can press Alt +...
-    </p>
-
-    <span class='c-post-card__date'>02 Dec 2020</span>
-  </a>
-
 </div>
-    
-      <div class='o-grid__col'>
 
-  <a href='/2020/09/30/installing_openwrt_bt_homehub/' class='c-post-card  '>
-    <h3 class='c-post-card__title'>Installing OpenWrt 19.07.3 on BT Homehub 5A</h3>
-
-    
-      <img src='/images/openwrt1.jpg' class='c-post__image' alt='Installing OpenWrt 19.07.3 on BT Homehub 5A'>
-    
-
-    <p class='c-post-card__excerpt u-font-medium'>
-      After moving into a new property a few months ago, the drawbacks of using the ISP supplied firmware included on my router rapidly started to become apparent. As a rule, ISP supplied firmwares tend to...
-    </p>
-
-    <span class='c-post-card__date'>30 Sep 2020</span>
-  </a>
-
-</div>
-    
-      <div class='o-grid__col'>
-
-  <a href='/2020/09/29/kindle-touch-koreader-accel-support-p1/' class='c-post-card   c-post-card--last '>
-    <h3 class='c-post-card__title'>Adding accelerometer support to KoReader for Kindle Touch: Part 1</h3>
-
-    
-      <img src='/images/kindle1.JPG' class='c-post__image' alt='Adding accelerometer support to KoReader for Kindle Touch: Part 1'>
-    
-
-    <p class='c-post-card__excerpt u-font-medium'>
-      The Kindle 5/Kindle Touch includes a Freescale MMA8453Q accelerometer as part of its internal hardware. It seems to have been added to enable rotation control functionality similar to that found on the later Kindle Oasis...
-    </p>
-
-    <span class='c-post-card__date'>29 Sep 2020</span>
-  </a>
-
-</div>
-    
-  </div>
-
-  <div class='o-grid'>
-    
-
-
-  </div>
-</div>
 
     <footer class='c-footer'>
   <div class='o-grid'>

@@ -5,10 +5,62 @@
     <description></description>
     <link>https://katadelos.github.io/</link>
     <atom:link href="https://katadelos.github.io/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Mon, 05 Oct 2020 20:52:21 +0100</pubDate>
-    <lastBuildDate>Mon, 05 Oct 2020 20:52:21 +0100</lastBuildDate>
+    <pubDate>Sat, 05 Dec 2020 19:17:38 +0000</pubDate>
+    <lastBuildDate>Sat, 05 Dec 2020 19:17:38 +0000</lastBuildDate>
     <generator>Jekyll v4.0.0</generator>
 
+    
+      <item>
+        <title>Taking high-quality screenshots using Xterm</title>
+        <description>&lt;p&gt;Something that I commonly need when writing documentation is high quality screenshots of terminal windows. It’s possible to create these using the standard tools provided with your distribution (for example, you can press Alt + Prt Scr and select the terminal window on Ubuntu), but this usually requires tweaking the font and window size to get an high-quality image that can be optimised down to web quality later.&lt;/p&gt;
+
+&lt;p&gt;There’s a couple of ways around this, but my preferred method is to use the screen dump functionality built into Xterm. Xterm is capable of saving the contents of the terminal to an SVG file, which gives us much more control over the final output without the need to use the less reliable method above.&lt;/p&gt;
+
+&lt;p&gt;Xterm looks a bit dated using the default font, so the first thing that we’ll do is configure it to use a font of our choice (in this case, Ubuntu Mono). It won’t have an impact on the SVG output - this is just to make Xterm a bit nicer to use whilst we’re taking screenshots.&lt;/p&gt;
+
+&lt;p&gt;We’ll also set the default geometry of the window. This will let us create consistently sized screenshots without needing to manually adjust the size of the Xterm window.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;To do this, create a file in your home directory called &lt;code class=&quot;highlighter-rouge&quot;&gt;.Xresources&lt;/code&gt; and add the following options within it:
+    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;! default options
+  XTerm*faceName: Ubuntu Mono
+  XTerm*faceSize: 14
+  XTerm.VT100.geometry: 110x32 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;These changes will not be picked up by default, so you will need to either restart your X server or merge the resource file you just created with the current settings in use:
+    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;xrdb -merge ~/.Xresources
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Taking a screenshot is simple - press Ctrl + left click and select &lt;code class=&quot;highlighter-rouge&quot;&gt;SVG screen dump&lt;/code&gt; from the menu that appears:
+&lt;img src=&quot;/images/xterm-screenshot/xterm1.jpg&quot; alt=&quot;neofetch&quot; /&gt;&lt;/li&gt;
+  &lt;li&gt;The screenshot will have a filename with this format:
+    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;xterm.YYYY.MM.DD.hh.mm.ss.svg
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;The SVG will be rendered slightly differently between operating systems due to the way that the font is specified within the file (&lt;code class=&quot;highlighter-rouge&quot;&gt;font-family='monospace'&lt;/code&gt;). Heavy use of color and line drawing characters will also show “artifacts” like these:
+&lt;img src=&quot;/images/xterm-screenshot/build-options-ccache.svg&quot; alt=&quot;ccache-svg&quot; /&gt;&lt;/li&gt;
+  &lt;li&gt;I attempted to avoid this by by using ImageMagick to convert the SVG to a PNG but obtained poor results:
+&lt;img src=&quot;/images/xterm-screenshot/xterm3.png&quot; alt=&quot;ccache-bad-png&quot; /&gt;&lt;/li&gt;
+  &lt;li&gt;Luckily, the output from &lt;code class=&quot;highlighter-rouge&quot;&gt;rsvg-convert&lt;/code&gt; looked a lot better:
+&lt;img src=&quot;/images/xterm-screenshot/build-options-ccache.png&quot; alt=&quot;ccache-bad-png&quot; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;rsvg-convert&lt;/code&gt; can be installed from the default Ubuntu repositories and used like so:
+    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sudo apt install librsvg2-bin
+rsvg-convert $INPUT_FILE.svg &amp;gt; $OUTPUT_FILE.png
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;By default, &lt;code class=&quot;highlighter-rouge&quot;&gt;rsvg-convert&lt;/code&gt; will use the geometry of the SVG file. This can lead to images that are slightly pixellated after conversion to PNG. To avoid this, set the zoom factor with the &lt;code class=&quot;highlighter-rouge&quot;&gt;-z&lt;/code&gt; flag to scale up the output image:
+    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;rsvg-convert -z 1.5 $INPUT_FILE.svg &amp;gt; $OUTPUT_FILE.png
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Overall, Xterm’s screen dump feature makes a good alternative to the usual methods of creating terminal screenshots; I’m surprised that this functionality isn’t found within more terminal emulators. Although needing to convert the SVG to a different format can be annoying, the level of detail and control offered by starting from a vector based format makes up for that.&lt;/p&gt;
+</description>
+        <pubDate>Wed, 02 Dec 2020 00:00:00 +0000</pubDate>
+        <link>https://katadelos.github.io/2020/12/02/high-quality-terminal-screenshots-xterm/</link>
+        <guid isPermaLink="true">https://katadelos.github.io/2020/12/02/high-quality-terminal-screenshots-xterm/</guid>
+      </item>
     
       <item>
         <title>Cross-Compiling MicroPython for Kindle Paperwhite 3</title>
@@ -932,6 +984,10 @@ i2c-adapter i2c-0: new_device: Instantiated device mma8453 at 0x1c&lt;/code&gt;&
     
       
         
+      
+    
+      
+    
       
     
       
